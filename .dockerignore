@@ -1,0 +1,11 @@
+# Build context = repo root, so exclude everything unneeded
+frontend/
+.agent/
+.gemini/
+.git/
+*.md
+.DS_Store
+.env
+backend/node_modules/
+backend/dist/
+backend/.env
