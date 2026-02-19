@@ -13,6 +13,7 @@ import { fetchKeywords } from "../api/keywords";
 import ConstellationCanvas from "../components/ConstellationCanvas";
 import KeywordInspector from "../components/KeywordInspector";
 import EpistemicSummary from "../components/EpistemicSummary";
+import ZoteroIngest from "../components/ZoteroIngest";
 
 // ─── Derive profiles from active keywords ────────────────────
 
@@ -151,6 +152,8 @@ export default function ConstellationPage() {
                         onClose={handlePaneClick}
                         onUpdated={handleUpdated}
                     />
+
+                    <ZoteroIngest onKeywordsAdded={handleSync} />
                 </aside>
             </div>
         </div>
