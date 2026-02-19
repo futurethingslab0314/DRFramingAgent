@@ -1,0 +1,203 @@
+{
+    "contract": "FramingConstellationBot — Front-End API Contract",
+    "version": "1.0.0",
+    "types": {
+        "Keyword": {
+            "id": "string",
+            "term": "string",
+            "orientation": "exploratory | critical | problem_solving | constructive",
+            "artifact_role": "probe | critique_device | generative_construct | solution_system | epistemic_mediator",
+            "pipeline_role?": "rq_trigger | method_bias | contribution_frame | tone_modifier",
+            "weight": "number (0–1)",
+            "active": "boolean",
+            "notes?": "string",
+            "source?": "string",
+            "updated_by?": "string"
+        },
+        "EpistemicProfile": {
+            "exploratory": "number",
+            "critical": "number",
+            "problem_solving": "number",
+            "constructive": "number"
+        },
+        "ArtifactProfile": {
+            "probe": "number",
+            "critique_device": "number",
+            "generative_construct": "number",
+            "solution_system": "number",
+            "epistemic_mediator": "number"
+        },
+        "FramingRunRequest": {
+            "user_context": "string",
+            "owner?": "string"
+        },
+        "FramingRunResponse": {
+            "research_question": "string",
+            "background": "string",
+            "purpose": "string",
+            "method": "string",
+            "result": "string",
+            "contribution": "string",
+            "abstract_en": "string",
+            "abstract_zh": "string",
+            "epistemic_profile": "EpistemicProfile",
+            "artifact_profile": "ArtifactProfile"
+        }
+    },
+    "api_endpoints": {
+        "GET /api/keywords": {
+            "description": "Fetch all keywords from Notion DB2",
+            "response": {
+                "keywords": "Keyword[]",
+                "count": "number"
+            }
+        },
+        "POST /api/keywords": {
+            "description": "Write one or more keywords to Notion DB2 (active defaults to false)",
+            "request": {
+                "keywords": [
+                    {
+                        "term": "string",
+                        "orientation": "exploratory | critical | problem_solving | constructive",
+                        "artifact_role": "probe | critique_device | generative_construct | solution_system | epistemic_mediator",
+                        "weight?": "number (0–1, default 1.0)",
+                        "notes?": "string",
+                        "source?": "string"
+                    }
+                ]
+            },
+            "response": {
+                "created": "number",
+                "pageIds": "string[]"
+            }
+        },
+        "PATCH /api/keywords/{id}": {
+            "description": "Update a single keyword by Notion page ID",
+            "request": {
+                "active?": "boolean",
+                "weight?": "number (0–1)",
+                "orientation?": "exploratory | critical | problem_solving | constructive",
+                "artifact_role?": "probe | critique_device | generative_construct | solution_system | epistemic_mediator",
+                "pipeline_role?": "rq_trigger | method_bias | contribution_frame | tone_modifier",
+                "notes?": "string"
+            },
+            "response": {
+                "updated": "boolean",
+                "id": "string"
+            }
+        },
+        "POST /api/framing/run": {
+            "description": "Run the full ConstellationFramingPipeline using active keywords from DB2",
+            "request": "FramingRunRequest",
+            "response": "FramingRunResponse"
+        },
+        "POST /api/framing/save": {
+            "description": "Save a FramingRunResponse to Notion DB1",
+            "request": {
+                "framing": "FramingRunResponse",
+                "title?": "string"
+            },
+            "response": {
+                "saved": "boolean",
+                "notion_page_id": "string"
+            }
+        },
+        "GET /api/zotero/items": {
+            "optional": true,
+            "description": "Fetch papers from all configured Zotero libraries",
+            "response": {
+                "papers": [
+                    {
+                        "key": "string",
+                        "title": "string",
+                        "abstract": "string",
+                        "tags": "string[]",
+                        "year?": "number",
+                        "doi?": "string"
+                    }
+                ],
+                "count": "number"
+            }
+        },
+        "POST /api/zotero/profile": {
+            "optional": true,
+            "description": "Profile a single paper — returns epistemic estimates and suggested keywords",
+            "request": {
+                "title": "string",
+                "abstract": "string",
+                "tags?": "string[]",
+                "year?": "number"
+            },
+            "response": {
+                "orientation_estimate": "EpistemicProfile",
+                "artifact_role_estimate": "ArtifactProfile",
+                "suggested_keywords": [
+                    {
+                        "term": "string",
+                        "orientation": "exploratory | critical | problem_solving | constructive",
+                        "artifact_role": "probe | critique_device | generative_construct | solution_system | epistemic_mediator",
+                        "weight": "number (0–1)",
+                        "notes": "string"
+                    }
+                ]
+            }
+        },
+        "POST /api/zotero/ingest": {
+            "optional": true,
+            "description": "Profile a paper and write its suggested keywords directly to Notion DB2 (active: false)",
+            "request": {
+                "title": "string",
+                "abstract": "string",
+                "tags?": "string[]",
+                "year?": "number"
+            },
+            "response": {
+                "profiled": "boolean",
+                "orientation_estimate": "EpistemicProfile",
+                "artifact_role_estimate": "ArtifactProfile",
+                "keywords_created": "number",
+                "pageIds": "string[]"
+            }
+        }
+    },
+    "constraints": {
+        "orientation": {
+            "type": "enum",
+            "values": [
+                "exploratory",
+                "critical",
+                "problem_solving",
+                "constructive"
+            ]
+        },
+        "artifact_role": {
+            "type": "enum",
+            "values": [
+                "probe",
+                "critique_device",
+                "generative_construct",
+                "solution_system",
+                "epistemic_mediator"
+            ]
+        },
+        "pipeline_role": {
+            "type": "enum",
+            "values": [
+                "rq_trigger",
+                "method_bias",
+                "contribution_frame",
+                "tone_modifier"
+            ]
+        },
+        "weight": {
+            "type": "number",
+            "min": 0,
+            "max": 1
+        },
+        "active": {
+            "type": "boolean"
+        },
+        "epistemic_profile": "All four values normalised, sum = 1",
+        "artifact_profile": "All five values normalised, sum = 1"
+    }
+}

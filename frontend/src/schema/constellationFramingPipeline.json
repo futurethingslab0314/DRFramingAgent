@@ -1,0 +1,111 @@
+{
+    "pipeline": "ConstellationFramingPipeline",
+    "agent": "FramingConstellationBot",
+    "version": "1.0.0",
+    "inputs": {
+        "keywords": {
+            "type": "array",
+            "description": "Array of keyword objects from Notion DB2",
+            "items": {
+                "term": "string",
+                "orientation": "exploratory | critical | problem_solving | constructive",
+                "artifact_role": "probe | critique_device | generative_construct | solution_system | epistemic_mediator",
+                "pipeline_role?": "rq_trigger | method_bias | contribution_frame | tone_modifier",
+                "weight?": "number (0-1, default 1.0)",
+                "active?": "boolean (default true)",
+                "notes?": "string"
+            }
+        },
+        "user_context": {
+            "type": "string",
+            "description": "User's design / project description or research intention"
+        }
+    },
+    "steps": [
+        {
+            "id": "step_1",
+            "skill": "ConstellationKeywordSync",
+            "type": "deterministic",
+            "input": {
+                "keywords": "$.inputs.keywords"
+            },
+            "output": {
+                "keyword_map_by_orientation": "$.state.keyword_map_by_orientation",
+                "keyword_index": "$.state.keyword_index",
+                "epistemic_profile": "$.state.epistemic_profile",
+                "artifact_profile": "$.state.artifact_profile"
+            }
+        },
+        {
+            "id": "step_2",
+            "skill": "ArtifactRoleInfluencer",
+            "type": "deterministic",
+            "input": {
+                "artifact_profile": "$.state.artifact_profile",
+                "epistemic_profile": "$.state.epistemic_profile",
+                "keyword_map_by_orientation": "$.state.keyword_map_by_orientation",
+                "keyword_index": "$.state.keyword_index"
+            },
+            "output": {
+                "framing_bias": "$.state.framing_bias"
+            }
+        },
+        {
+            "id": "step_3",
+            "skill": "ConstellationRuleEngine",
+            "type": "deterministic",
+            "input": {
+                "epistemic_profile": "$.state.epistemic_profile",
+                "keyword_map_by_orientation": "$.state.keyword_map_by_orientation",
+                "keyword_index": "$.state.keyword_index",
+                "framing_bias": "$.state.framing_bias"
+            },
+            "output": {
+                "reasoning_control": "$.state.reasoning_control"
+            }
+        },
+        {
+            "id": "step_4",
+            "skill": "FramingGeneratorMVP",
+            "type": "llm",
+            "input": {
+                "user_context": "$.inputs.user_context",
+                "rule_engine_output": "$.state.reasoning_control"
+            },
+            "output": {
+                "research_question": "$.state.research_question",
+                "background": "$.state.background",
+                "purpose": "$.state.purpose",
+                "method": "$.state.method",
+                "result": "$.state.result",
+                "contribution": "$.state.contribution"
+            }
+        },
+        {
+            "id": "step_5",
+            "skill": "ConstellationAbstractGenerator",
+            "type": "llm",
+            "input": {
+                "background": "$.state.background",
+                "purpose": "$.state.purpose",
+                "method": "$.state.method",
+                "result": "$.state.result",
+                "contribution": "$.state.contribution"
+            },
+            "output": {
+                "abstract_en": "$.state.abstract_en",
+                "abstract_zh": "$.state.abstract_zh"
+            }
+        }
+    ],
+    "outputs": {
+        "research_question": "$.state.research_question",
+        "background": "$.state.background",
+        "purpose": "$.state.purpose",
+        "method": "$.state.method",
+        "result": "$.state.result",
+        "contribution": "$.state.contribution",
+        "abstract_en": "$.state.abstract_en",
+        "abstract_zh": "$.state.abstract_zh"
+    }
+}
