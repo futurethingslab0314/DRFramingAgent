@@ -1,5 +1,4 @@
 # Build context = repo root, so exclude everything unneeded
-frontend/
 .agent/
 .gemini/
 .git/
@@ -9,3 +8,5 @@ frontend/
 backend/node_modules/
 backend/dist/
 backend/.env
+frontend/node_modules/
+frontend/dist/
