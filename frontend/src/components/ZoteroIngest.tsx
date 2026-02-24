@@ -29,6 +29,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
     const [fetching, setFetching] = useState(false);
     const [batchRunning, setBatchRunning] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
 
     // ── Fetch all papers from Zotero ─────────────────────────
     const handleFetch = useCallback(async () => {
@@ -39,6 +40,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
             setPapers(
                 res.papers.map((p) => ({ paper: p, status: "idle" as PaperStatus })),
             );
+            setSelected(new Set());
         } catch (err) {
             setFetchError(err instanceof Error ? err.message : "Failed to fetch");
         } finally {
@@ -90,14 +92,41 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
         [papers, onKeywordsAdded],
     );
 
-    // ── Ingest all papers with abstracts ─────────────────────
-    const handleIngestAll = useCallback(async () => {
+    // ── Selection helpers ─────────────────────────────────────
+    const toggleSelect = useCallback((key: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    }, []);
+
+    const selectableKeys = papers
+        .filter((e) => e.paper.abstract.trim().length > 0 && e.status === "idle")
+        .map((e) => e.paper.key);
+
+    const allSelected =
+        selectableKeys.length > 0 && selectableKeys.every((k) => selected.has(k));
+
+    const handleToggleAll = useCallback(() => {
+        if (allSelected) {
+            setSelected(new Set());
+        } else {
+            setSelected(new Set(selectableKeys));
+        }
+    }, [allSelected, selectableKeys]);
+
+    // ── Ingest selected papers ───────────────────────────────
+    const handleIngestSelected = useCallback(async () => {
         setBatchRunning(true);
         const eligibleIndices = papers
             .map((e, i) => ({ e, i }))
             .filter(
                 ({ e }) =>
-                    e.paper.abstract.trim().length > 0 && e.status === "idle",
+                    selected.has(e.paper.key) &&
+                    e.paper.abstract.trim().length > 0 &&
+                    e.status === "idle",
             )
             .map(({ i }) => i);
 
@@ -139,9 +168,10 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
             }
         }
 
+        setSelected(new Set());
         onKeywordsAdded();
         setBatchRunning(false);
-    }, [papers, onKeywordsAdded]);
+    }, [papers, selected, onKeywordsAdded]);
 
     // ── Status badge ─────────────────────────────────────────
     const statusBadge = (status: PaperStatus) => {
@@ -158,9 +188,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
     // ── Stats ────────────────────────────────────────────────
     const withAbstract = papers.filter((e) => e.paper.abstract.trim().length > 0);
     const doneCount = papers.filter((e) => e.status === "done").length;
-    const idleWithAbstract = papers.filter(
-        (e) => e.paper.abstract.trim().length > 0 && e.status === "idle",
-    ).length;
+    const selectedCount = selected.size;
 
     return (
         <div
@@ -191,18 +219,32 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
             {/* Paper list */}
             {papers.length > 0 && (
                 <>
-                    {/* Stats bar */}
+                    {/* Stats + select all + ingest selected */}
                     <div className="flex items-center justify-between mb-3">
-                        <span
-                            className="text-xs"
-                            style={{ color: theme.colors.text.dim }}
-                        >
-                            {papers.length} papers • {withAbstract.length} with
-                            abstract • {doneCount} ingested
-                        </span>
-                        {idleWithAbstract > 0 && (
+                        <div className="flex items-center gap-3">
+                            {selectableKeys.length > 0 && (
+                                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={allSelected}
+                                        onChange={handleToggleAll}
+                                        className="accent-blue-500 w-3.5 h-3.5"
+                                    />
+                                    <span className="text-xs text-slate-400">
+                                        {allSelected ? "Deselect All" : "Select All"}
+                                    </span>
+                                </label>
+                            )}
+                            <span
+                                className="text-xs"
+                                style={{ color: theme.colors.text.dim }}
+                            >
+                                {papers.length} papers • {withAbstract.length} with abstract • {doneCount} ingested
+                            </span>
+                        </div>
+                        {selectedCount > 0 && (
                             <button
-                                onClick={handleIngestAll}
+                                onClick={handleIngestSelected}
                                 disabled={batchRunning}
                                 className={`text-xs px-3 py-1 rounded-md font-medium transition-all ${batchRunning
                                     ? "bg-slate-700 text-slate-500 cursor-wait"
@@ -211,7 +253,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                             >
                                 {batchRunning
                                     ? "Processing…"
-                                    : `Ingest All (${idleWithAbstract})`}
+                                    : `Ingest Selected (${selectedCount})`}
                             </button>
                         )}
                     </div>
@@ -231,8 +273,16 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                             : "bg-slate-900/40"
                                         }`}
                                 >
-                                    {/* Title + status */}
-                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                    {/* Checkbox + Title + status */}
+                                    <div className="flex items-start gap-2 mb-1">
+                                        {hasAbstract && entry.status === "idle" && (
+                                            <input
+                                                type="checkbox"
+                                                checked={selected.has(entry.paper.key)}
+                                                onChange={() => toggleSelect(entry.paper.key)}
+                                                className="accent-blue-500 w-3.5 h-3.5 mt-0.5 shrink-0 cursor-pointer"
+                                            />
+                                        )}
                                         <p
                                             className="text-sm font-medium leading-snug flex-1"
                                             style={{
