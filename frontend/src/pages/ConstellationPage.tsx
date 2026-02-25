@@ -108,6 +108,21 @@ export default function ConstellationPage() {
     }, [loadData]);
 
     const profiles = useMemo(() => deriveProfiles(keywords), [keywords]);
+    const visibleGraphNodes = useMemo(
+        () => graphNodes.filter((n) => n.active),
+        [graphNodes],
+    );
+    const visibleNodeIds = useMemo(
+        () => new Set(visibleGraphNodes.map((n) => n.id)),
+        [visibleGraphNodes],
+    );
+    const visibleGraphEdges = useMemo(
+        () =>
+            graphEdges.filter(
+                (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target),
+            ),
+        [graphEdges, visibleNodeIds],
+    );
 
     if (loading && keywords.length === 0) {
         return (
@@ -132,7 +147,7 @@ export default function ConstellationPage() {
                 </h2>
                 <div className="flex items-center gap-3">
                     <span className={theme.typography.mono} style={{ color: theme.colors.text.dim }}>
-                        {graphNodes.length} nodes • {graphEdges.length} edges • {keywords.filter((k) => k.active).length} active
+                        {visibleGraphNodes.length} nodes • {visibleGraphEdges.length} edges • {keywords.filter((k) => k.active).length} active
                     </span>
                     <button
                         onClick={handleSync}
@@ -149,8 +164,8 @@ export default function ConstellationPage() {
                 {/* Canvas */}
                 <div className="flex-1">
                     <ConstellationCanvas
-                        nodes={graphNodes}
-                        edges={graphEdges}
+                        nodes={visibleGraphNodes}
+                        edges={visibleGraphEdges}
                         selectedId={selected?.id}
                         onNodeClick={handleNodeClick}
                         onPaneClick={handlePaneClick}
