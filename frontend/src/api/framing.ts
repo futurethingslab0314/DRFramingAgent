@@ -28,11 +28,12 @@ export async function runFraming(
 export async function saveFraming(
     framing: FramingRunResponse,
     title?: string,
+    owner?: string,
 ): Promise<FramingSaveResponse> {
     const res = await fetch("/api/framing/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ framing, title }),
+        body: JSON.stringify({ framing, title, owner }),
     });
     if (!res.ok) throw new Error(`saveFraming failed: ${res.status}`);
     return res.json();

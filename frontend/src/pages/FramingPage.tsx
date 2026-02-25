@@ -10,9 +10,11 @@ import FramingCard from "../components/FramingCard";
 
 export default function FramingPage() {
     const [result, setResult] = useState<FramingRunResponse | null>(null);
+    const [owner, setOwner] = useState<string | undefined>(undefined);
 
-    const handleResult = useCallback((res: FramingRunResponse) => {
+    const handleResult = useCallback((res: FramingRunResponse, ownerValue?: string) => {
         setResult(res);
+        setOwner(ownerValue);
     }, []);
 
     return (
@@ -40,7 +42,7 @@ export default function FramingPage() {
                     className={`flex-1 overflow-y-auto p-6 pb-10 ${theme.layout.scrollbar}`}
                 >
                     {result ? (
-                        <FramingCard result={result} />
+                        <FramingCard result={result} owner={owner} />
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full">
                             <p

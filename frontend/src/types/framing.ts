@@ -26,6 +26,7 @@ export interface FramingRunResponse {
 export interface FramingSaveRequest {
     framing: FramingRunResponse;
     title?: string;
+    owner?: string;
 }
 
 export interface FramingSaveResponse {

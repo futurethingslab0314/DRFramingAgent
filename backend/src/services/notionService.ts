@@ -55,6 +55,7 @@ const DB2 = {
 
 const DB1 = {
     TITLE: "Title",
+    OWNER: "Owner",
     RESEARCH_QUESTION: "Research Question",
     BACKGROUND: "Background",
     PURPOSE: "Purpose",
@@ -288,6 +289,7 @@ export interface FramingResult {
 export async function writeFramingToDB1(
     framing: FramingResult,
     title?: string,
+    owner?: string,
 ): Promise<string> {
     const response = await notion().pages.create({
         parent: { database_id: db1Id() },
@@ -295,6 +297,13 @@ export async function writeFramingToDB1(
             [DB1.TITLE]: {
                 title: [{ text: { content: title ?? framing.research_question.slice(0, 80) } }],
             },
+            ...(owner
+                ? {
+                    [DB1.OWNER]: {
+                        rich_text: [{ text: { content: owner } }],
+                    },
+                }
+                : {}),
             [DB1.RESEARCH_QUESTION]: {
                 rich_text: [{ text: { content: framing.research_question } }],
             },

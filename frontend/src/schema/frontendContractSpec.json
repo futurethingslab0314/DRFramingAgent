@@ -96,7 +96,8 @@
             "description": "Save a FramingRunResponse to Notion DB1",
             "request": {
                 "framing": "FramingRunResponse",
-                "title?": "string"
+                "title?": "string",
+                "owner?": "string"
             },
             "response": {
                 "saved": "boolean",

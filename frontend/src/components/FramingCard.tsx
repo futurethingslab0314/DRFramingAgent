@@ -25,11 +25,12 @@ const FIELD_LABELS: Record<FramingField, string> = {
 
 interface FramingCardProps {
     result: FramingRunResponse;
+    owner?: string;
 }
 
 // ─── Component ───────────────────────────────────────────────
 
-export default function FramingCard({ result }: FramingCardProps) {
+export default function FramingCard({ result, owner }: FramingCardProps) {
     const [edited, setEdited] = useState<FramingRunResponse>({ ...result });
     const [saving, setSaving] = useState(false);
     const [refining, setRefining] = useState(false);
@@ -58,7 +59,11 @@ export default function FramingCard({ result }: FramingCardProps) {
         setSaving(true);
         setSaveResult(null);
         try {
-            const res = await saveFraming(edited, edited.title || edited.research_question);
+            const res = await saveFraming(
+                edited,
+                edited.title || edited.research_question,
+                owner,
+            );
             setSaveResult(`✓ Saved → Notion DB1 (${res.notion_page_id.slice(0, 8)}…)`);
             setDirty(false);
         } catch (err) {
@@ -68,7 +73,7 @@ export default function FramingCard({ result }: FramingCardProps) {
         } finally {
             setSaving(false);
         }
-    }, [edited]);
+    }, [edited, owner]);
 
     // AI Refine
     const handleRefine = useCallback(async () => {

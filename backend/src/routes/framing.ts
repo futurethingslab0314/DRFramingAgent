@@ -47,18 +47,18 @@ router.post("/run", async (req, res) => {
  * POST /api/framing/save
  * Save a FramingRunResponse to Notion DB1.
  *
- * Body: { framing: FramingRunResponse, title?: string }
+ * Body: { framing: FramingRunResponse, title?: string, owner?: string }
  */
 router.post("/save", async (req, res) => {
     try {
-        const { framing, title } = req.body;
+        const { framing, title, owner } = req.body;
 
         if (!framing || !framing.research_question) {
             res.status(400).json({ error: "framing object with research_question is required" });
             return;
         }
 
-        const notionPageId = await writeFramingToDB1(framing, title);
+        const notionPageId = await writeFramingToDB1(framing, title, owner);
 
         res.json({
             saved: true,

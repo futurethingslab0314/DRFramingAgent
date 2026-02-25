@@ -8,7 +8,7 @@ import type { FramingRunResponse } from "../types/framing";
 import { runFraming } from "../api/framing";
 
 interface ChatPanelProps {
-    onResult: (result: FramingRunResponse) => void;
+    onResult: (result: FramingRunResponse, owner?: string) => void;
 }
 
 export default function ChatPanel({ onResult }: ChatPanelProps) {
@@ -26,7 +26,7 @@ export default function ChatPanel({ onResult }: ChatPanelProps) {
                 user_context: context.trim(),
                 owner: owner.trim() || undefined,
             });
-            onResult(result);
+            onResult(result, owner.trim() || undefined);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Pipeline failed");
         } finally {
