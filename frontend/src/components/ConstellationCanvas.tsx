@@ -33,6 +33,14 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
     edgeType: EpistemicEdgeType;
 }
 
+interface Region {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    label: string;
+}
+
 // ─── Props ───────────────────────────────────────────────────
 
 interface ConstellationCanvasProps {
@@ -114,6 +122,48 @@ export default function ConstellationCanvas({
 
         svg.selectAll("*").remove();
 
+        const pad = 24;
+        const regionWidth = (width - pad * 3) / 2;
+        const regionHeight = (height - pad * 3) / 2;
+        const regions: Record<Orientation, Region> = {
+            exploratory: {
+                x: pad,
+                y: pad,
+                width: regionWidth,
+                height: regionHeight,
+                label: "EXPLORATORY",
+            },
+            critical: {
+                x: pad * 2 + regionWidth,
+                y: pad,
+                width: regionWidth,
+                height: regionHeight,
+                label: "CRITICAL",
+            },
+            problem_solving: {
+                x: pad,
+                y: pad * 2 + regionHeight,
+                width: regionWidth,
+                height: regionHeight,
+                label: "PROBLEM SOLVING",
+            },
+            constructive: {
+                x: pad * 2 + regionWidth,
+                y: pad * 2 + regionHeight,
+                width: regionWidth,
+                height: regionHeight,
+                label: "CONSTRUCTIVE",
+            },
+        };
+
+        const centerOf = (orientation: Orientation) => {
+            const r = regions[orientation];
+            return {
+                x: r.x + r.width / 2,
+                y: r.y + r.height / 2,
+            };
+        };
+
         // ── Defs: arrow markers for edge types ───────────────
         const defs = svg.append("defs");
 
@@ -159,6 +209,35 @@ export default function ConstellationCanvas({
             if (event.target === svgRef.current) handlePaneClick();
         });
 
+        // ── Orientation regions ────────────────────────────
+        const regionG = g.append("g").attr("class", "regions");
+
+        (Object.keys(regions) as Orientation[]).forEach((key) => {
+            const region = regions[key];
+            regionG
+                .append("rect")
+                .attr("x", region.x)
+                .attr("y", region.y)
+                .attr("width", region.width)
+                .attr("height", region.height)
+                .attr("rx", 16)
+                .attr("fill", `${ORIENTATION_COLORS[key]}14`)
+                .attr("stroke", `${ORIENTATION_COLORS[key]}66`)
+                .attr("stroke-width", 1.2)
+                .attr("stroke-dasharray", "6 6");
+
+            regionG
+                .append("text")
+                .attr("x", region.x + 14)
+                .attr("y", region.y + 22)
+                .text(region.label)
+                .attr("fill", ORIENTATION_COLORS[key])
+                .attr("font-size", "11px")
+                .attr("font-weight", "800")
+                .style("letter-spacing", "0.12em")
+                .style("pointer-events", "none");
+        });
+
         // ── Simulation ─────────────────────────────────────
         const simulation = d3
             .forceSimulation<SimNode>(simNodes)
@@ -167,11 +246,23 @@ export default function ConstellationCanvas({
                 d3
                     .forceLink<SimNode, SimLink>(simLinks)
                     .id((d) => d.id)
-                    .distance(200)
+                    .distance(160)
                     .strength((d) => d.finalWeight * 0.5),
             )
             .force("charge", d3.forceManyBody().strength(-800))
             .force("center", d3.forceCenter(width / 2, height / 2))
+            .force(
+                "x",
+                d3
+                    .forceX<SimNode>((d) => centerOf(d.orientation).x)
+                    .strength(0.18),
+            )
+            .force(
+                "y",
+                d3
+                    .forceY<SimNode>((d) => centerOf(d.orientation).y)
+                    .strength(0.18),
+            )
             .force(
                 "collision",
                 d3
