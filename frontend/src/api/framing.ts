@@ -37,3 +37,22 @@ export async function saveFraming(
     if (!res.ok) throw new Error(`saveFraming failed: ${res.status}`);
     return res.json();
 }
+
+/** Refine user-edited framing using LLM for academic polish */
+export async function refineFraming(
+    framing: Omit<FramingRunResponse, "epistemic_profile" | "artifact_profile">,
+): Promise<Omit<FramingRunResponse, "epistemic_profile" | "artifact_profile">> {
+    const res = await fetch("/api/framing/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(framing),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+            (body as { error?: string }).error ?? `refineFraming failed: ${res.status}`,
+        );
+    }
+    return res.json();
+}
+

@@ -1,13 +1,10 @@
-// ═══════════════════════════════════════════════════════════════
-// Framing routes (replaces old pipeline routes)
-// ═══════════════════════════════════════════════════════════════
-
 import { Router } from "express";
 import { runPipeline } from "../pipeline/runPipeline.js";
 import {
     fetchKeywordsFromDB2,
     writeFramingToDB1,
 } from "../services/notionService.js";
+import { callLLM } from "../services/llmService.js";
 
 const router = Router();
 
@@ -67,6 +64,57 @@ router.post("/save", async (req, res) => {
             saved: true,
             notion_page_id: notionPageId,
         });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        res.status(500).json({ error: message });
+    }
+});
+
+/**
+ * POST /api/framing/refine
+ * Refine user-edited framing fields using LLM for academic polish and logical coherence.
+ *
+ * Body: { research_question, background, purpose, method, result, contribution, abstract_en, abstract_zh }
+ */
+router.post("/refine", async (req, res) => {
+    try {
+        const { research_question, background, purpose, method, result, contribution, abstract_en, abstract_zh } = req.body;
+
+        if (!research_question) {
+            res.status(400).json({ error: "research_question is required" });
+            return;
+        }
+
+        const system = `You are an expert academic writing consultant specializing in design research.
+Your task is to refine and improve the user's research framing while preserving their original intent and key ideas.
+
+Guidelines:
+1. Maintain academic tone and rigor
+2. Ensure logical coherence across all fields (background → purpose → method → result → contribution)
+3. Tighten prose — remove redundancy, improve clarity
+4. Ensure the research question aligns with the purpose and method
+5. Make abstracts concise yet comprehensive
+6. Preserve the user's core arguments and terminology
+7. Do NOT change the fundamental research direction
+
+Return a JSON object with exactly these fields:
+{ "research_question", "background", "purpose", "method", "result", "contribution", "abstract_en", "abstract_zh" }`;
+
+        const user = JSON.stringify({
+            research_question,
+            background,
+            purpose,
+            method,
+            result,
+            contribution,
+            abstract_en,
+            abstract_zh,
+        });
+
+        const raw = await callLLM(system, `Please refine the following research framing:\n${user}`);
+        const refined = JSON.parse(raw);
+
+        res.json(refined);
     } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         res.status(500).json({ error: message });
