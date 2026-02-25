@@ -347,10 +347,15 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                         </span>
                                     )}
                                     {entry.status === "done" && entry.result && (
-                                        <span className="text-xs text-emerald-400 font-mono">
-                                            +{entry.result.keywords_created}{" "}
-                                            keywords added
-                                        </span>
+                                        <div className="text-xs text-emerald-400 font-mono space-y-0.5">
+                                            <div>
+                                                +{entry.result.keywords_created} keywords added
+                                            </div>
+                                            <div className="text-slate-400">
+                                                raw {entry.result.keywords_raw} → refined {entry.result.keywords_refined}
+                                                {" "}({entry.result.keywords_dropped} dropped)
+                                            </div>
+                                        </div>
                                     )}
                                     {entry.status === "error" && entry.error && (
                                         <span className="text-xs text-red-400">

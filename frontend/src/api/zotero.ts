@@ -15,7 +15,14 @@ export interface IngestResult {
     profiled: boolean;
     orientation_estimate: Record<string, number>;
     artifact_role_estimate: Record<string, number>;
+    keywords_raw: number;
+    keywords_refined: number;
+    keywords_dropped: number;
     keywords_created: number;
+    refinement_report: {
+        dropped: Array<{ term: string; reason: string }>;
+        merged: Array<{ canonical_term: string; merged_from: string[] }>;
+    };
     pageIds: string[];
 }
 

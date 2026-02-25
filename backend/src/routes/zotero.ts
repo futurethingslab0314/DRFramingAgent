@@ -6,6 +6,7 @@ import { Router } from "express";
 import { fetchAllLibraries } from "../services/zoteroReader.js";
 import { runProfilePaper } from "../pipeline/runPipeline.js";
 import { writeKeywordsToDB2 } from "../services/notionService.js";
+import { keywordConceptRefiner } from "../skills/keywordConceptRefiner.js";
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.post("/profile", async (req, res) => {
 
 /**
  * POST /api/zotero/ingest
- * Profile a paper AND write its suggested keywords to Notion DB2 (active: false).
+ * Profile a paper, refine/merge keywords, then write to Notion DB2 (active: false).
  *
  * Body: { title: string, abstract: string, tags?: string[], year?: number }
  */
@@ -64,9 +65,23 @@ router.post("/ingest", async (req, res) => {
         // Profile the paper
         const profile = await runProfilePaper({ title, abstract, tags, year });
 
+        // Refine before ingest (conceptual-first)
+        const refinement = keywordConceptRefiner(
+            profile.suggested_keywords.map((kw) => ({
+                ...kw,
+                active: true,
+            })),
+            {
+                mode: "conceptual_strict",
+                max_keywords: 12,
+                min_weight: 0.35,
+                drop_terms: ["system", "platform", "technology", "model", "framework"],
+            },
+        );
+
         // Write suggested keywords to DB2
         const paperSource = `zotero:${title}`;
-        const keywordsToWrite = profile.suggested_keywords.map((kw) => ({
+        const keywordsToWrite = refinement.refined_keywords.map((kw) => ({
             ...kw,
             source: paperSource,
         }));
@@ -76,7 +91,14 @@ router.post("/ingest", async (req, res) => {
             profiled: true,
             orientation_estimate: profile.orientation_estimate,
             artifact_role_estimate: profile.artifact_role_estimate,
+            keywords_raw: profile.suggested_keywords.length,
+            keywords_refined: refinement.refined_keywords.length,
+            keywords_dropped: refinement.dropped_keywords.length,
             keywords_created: pageIds.length,
+            refinement_report: {
+                dropped: refinement.dropped_keywords,
+                merged: refinement.merge_report,
+            },
             pageIds,
         });
     } catch (err) {

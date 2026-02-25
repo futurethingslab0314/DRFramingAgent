@@ -146,7 +146,7 @@
         },
         "POST /api/zotero/ingest": {
             "optional": true,
-            "description": "Profile a paper and write its suggested keywords directly to Notion DB2 (active: false)",
+            "description": "Profile a paper, refine/merge conceptual keywords, then write to Notion DB2 (active: false)",
             "request": {
                 "title": "string",
                 "abstract": "string",
@@ -157,7 +157,14 @@
                 "profiled": "boolean",
                 "orientation_estimate": "EpistemicProfile",
                 "artifact_role_estimate": "ArtifactProfile",
+                "keywords_raw": "number",
+                "keywords_refined": "number",
+                "keywords_dropped": "number",
                 "keywords_created": "number",
+                "refinement_report": {
+                    "dropped": [{ "term": "string", "reason": "string" }],
+                    "merged": [{ "canonical_term": "string", "merged_from": "string[]" }]
+                },
                 "pageIds": "string[]"
             }
         }
