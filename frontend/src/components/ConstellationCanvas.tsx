@@ -340,6 +340,7 @@ export default function ConstellationCanvas({
         // Keyword label
         nodeG
             .append("text")
+            .attr("class", "node-label")
             .attr("dy", (d) => nodeRadius(d) + 16)
             .attr("text-anchor", "middle")
             .text((d) => d.term)
@@ -357,6 +358,7 @@ export default function ConstellationCanvas({
         nodeG
             .filter((d) => d.frequency > 1)
             .append("text")
+            .attr("class", "node-frequency")
             .attr("dy", (d) => nodeRadius(d) + 28)
             .attr("text-anchor", "middle")
             .text((d) => `×${d.frequency}`)
@@ -420,12 +422,7 @@ export default function ConstellationCanvas({
                 d.id === selectedId ? 0.25 : 0.08,
             );
 
-        svg.selectAll<SVGTextElement, SimNode>("text")
-            .filter(function () {
-                return (
-                    d3.select(this).attr("font-size") === "11px"
-                );
-            })
+        svg.selectAll<SVGTextElement, SimNode>(".node-label")
             .attr("fill", (d) =>
                 d.id === selectedId ? "#ffffff" : "#94a3b8",
             );
