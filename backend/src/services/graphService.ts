@@ -70,7 +70,7 @@ const DEFAULT_WEIGHT_CONFIG: WeightConfig = {
 
 const HALF_LIFE_DAYS = 30;
 const MAX_EDGES_PER_NODE = 8;
-const MIN_FINAL_WEIGHT = 0.05;
+const MIN_FINAL_WEIGHT = 0.02;
 const ROLE_PRIOR_BASE = 0.3;
 
 // ─── Input type (from notionService) ─────────────────────────
@@ -174,17 +174,13 @@ export function buildGraph(
         return edgeMap.get(key)!;
     }
 
-    // 3a. Co-occurrence edges
+    // 3a. Co-occurrence edges (raw counts first)
     for (const [, nodeIds] of sourceGroups) {
         if (nodeIds.length < 2) continue;
         for (let i = 0; i < nodeIds.length; i++) {
             for (let j = i + 1; j < nodeIds.length; j++) {
                 const edge = getEdge(nodeIds[i], nodeIds[j]);
-                // Increment co-occurrence (capped at 1)
-                edge.weights.coOccurrence = Math.min(
-                    1,
-                    edge.weights.coOccurrence + 1 / sourceGroups.size,
-                );
+                edge.weights.coOccurrence += 1;
             }
         }
     }
@@ -201,13 +197,29 @@ export function buildGraph(
         }
     }
 
-    // 4. Compute final weights
+    // 4. Normalise co-occurrence to 0-1 using log scaling.
+    // This avoids over-penalising sparse links when the dataset grows.
     const edges = [...edgeMap.values()];
+    const maxCoOccurrence = edges.reduce(
+        (max, edge) => Math.max(max, edge.weights.coOccurrence),
+        0,
+    );
+
+    if (maxCoOccurrence > 0) {
+        const normaliser = Math.log1p(maxCoOccurrence);
+        for (const edge of edges) {
+            if (edge.weights.coOccurrence > 0) {
+                edge.weights.coOccurrence = Math.log1p(edge.weights.coOccurrence) / normaliser;
+            }
+        }
+    }
+
+    // 5. Compute final weights
     for (const edge of edges) {
         edge.finalWeight = computeFinalWeight(edge.weights, config);
     }
 
-    // 5. Apply normalization (prune)
+    // 6. Apply normalization (prune)
     const prunedEdges = normalizeEdges(edges);
 
     return { nodes, edges: prunedEdges };
