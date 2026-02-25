@@ -11,6 +11,7 @@ import { fileURLToPath } from "url";
 import zoteroRoutes from "./routes/zotero.js";
 import keywordRoutes from "./routes/keywords.js";
 import framingRoutes from "./routes/framing.js";
+import graphRoutes from "./routes/graph.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +33,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/zotero", zoteroRoutes);
 app.use("/api/keywords", keywordRoutes);
 app.use("/api/framing", framingRoutes);
+app.use("/api/graph", graphRoutes);
 
 // ─── Serve Frontend (production) ────────────────────────────
 

@@ -112,3 +112,63 @@ export function computeNodeRadius(weight: number): number {
 export function computeGlowRadius(weight: number): number {
     return computeNodeRadius(weight) * theme.viz.nodes.glowRadiusFactor;
 }
+
+// ─── Graph types (multi-layer weighted edges) ────────────────
+
+export type EpistemicEdgeType =
+    | "reinforces"
+    | "challenges"
+    | "extends"
+    | "contextualizes";
+
+export interface EdgeWeight {
+    coOccurrence: number;
+    semantic: number;
+    rolePrior: number;
+    userHistory: number;
+    manual: number;
+}
+
+export interface GraphEdge {
+    source: string;
+    target: string;
+    weights: EdgeWeight;
+    finalWeight: number;
+    edgeType: EpistemicEdgeType;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GraphNode {
+    id: string;
+    term: string;
+    orientation: Orientation;
+    artifact_role: ArtifactRole;
+    weight: number;
+    active: boolean;
+    frequency: number;
+    sourcePapers: string[];
+    notes?: string;
+}
+
+export interface ConstellationGraph {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+}
+
+export interface TopKNeighborResult {
+    nodeId: string;
+    neighbors: Array<{
+        neighborId: string;
+        weight: number;
+        edgeType: EpistemicEdgeType;
+    }>;
+}
+
+export const EDGE_TYPE_COLORS: Record<EpistemicEdgeType, string> = {
+    reinforces: "#22c55e",    // green
+    challenges: "#ef4444",    // red
+    extends: "#3b82f6",       // blue
+    contextualizes: "#8b5cf6", // purple
+};
+

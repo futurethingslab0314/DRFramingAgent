@@ -1,229 +1,350 @@
 // ═══════════════════════════════════════════════════════════════
-// ConstellationCanvas — React Flow canvas with NOVAFRAME theme
+// ConstellationCanvas — D3 force-simulation knowledge graph
 // ═══════════════════════════════════════════════════════════════
 
-import { useCallback, useMemo } from "react";
-import ReactFlow, {
-    Background,
-    Controls,
-    MiniMap,
-    Handle,
-    Position,
-    type Node,
-    type NodeTypes,
-    type NodeProps,
-} from "reactflow";
-import "reactflow/dist/style.css";
-
+import { useEffect, useRef, useCallback } from "react";
+import * as d3 from "d3";
 import { theme } from "../design/theme";
-import type { Keyword, Orientation } from "../types/keyword";
+import type {
+    GraphNode,
+    GraphEdge,
+    Orientation,
+    EpistemicEdgeType,
+} from "../types/keyword";
 import {
-    ORIENTATION_CENTERS,
     ORIENTATION_COLORS,
-    ARTIFACT_ROLE_SHAPES,
-    computeNodePosition,
-    computeNodeRadius,
-    computeGlowRadius,
+    EDGE_TYPE_COLORS,
 } from "../types/keyword";
 
-// ─── Custom keyword node ─────────────────────────────────────
+// ─── D3 simulation node type ─────────────────────────────────
 
-function KeywordNode({ data }: NodeProps) {
-    const kw = data.keyword as Keyword;
-    const color = ORIENTATION_COLORS[kw.orientation];
-    const shape = ARTIFACT_ROLE_SHAPES[kw.artifact_role];
-    const radius = computeNodeRadius(kw.weight);
-    const glowR = computeGlowRadius(kw.weight);
-
-    return (
-        <div
-            className={`keyword-node ${shape}`}
-            style={{
-                width: radius * 2,
-                height: radius * 2,
-                opacity: kw.active ? 1 : 0.3,
-                borderColor: kw.active
-                    ? theme.viz.nodes.activeStroke
-                    : theme.viz.nodes.inactiveStroke,
-                background: `${color}22`,
-                boxShadow: kw.active
-                    ? `0 0 ${theme.viz.nodes.blurAmount} ${glowR * theme.viz.nodes.glowOpacity}px ${color}`
-                    : "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                cursor: "pointer",
-                transition: theme.animation.fastTransition.replace(
-                    /transition-all\s*/,
-                    "",
-                ),
-            }}
-        >
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                style={{ visibility: "hidden" }}
-            />
-            <span
-                style={{
-                    position: "absolute",
-                    top: radius * 2 + 4,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    whiteSpace: "nowrap",
-                    fontSize: theme.viz.nodes.labelSize,
-                    color: kw.active
-                        ? theme.viz.nodes.labelColorActive
-                        : theme.viz.nodes.labelColor,
-                }}
-            >
-                {kw.term}
-            </span>
-        </div>
-    );
+interface SimNode extends d3.SimulationNodeDatum {
+    id: string;
+    term: string;
+    orientation: Orientation;
+    frequency: number;
+    weight: number;
+    active: boolean;
+    sourcePapers: string[];
 }
 
-// ─── Custom center node ──────────────────────────────────────
-
-function CenterNode({ data }: NodeProps) {
-    const orientation = data.orientation as Orientation;
-    const color = ORIENTATION_COLORS[orientation];
-    const label = orientation.replace("_", " ");
-
-    return (
-        <div
-            style={{
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                border: `2px solid ${color}`,
-                background: `${color}18`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: `0 0 30px ${color}44`,
-            }}
-        >
-            <span
-                className={theme.typography.label}
-                style={{ color, textAlign: "center", lineHeight: 1.2 }}
-            >
-                {label}
-            </span>
-        </div>
-    );
+interface SimLink extends d3.SimulationLinkDatum<SimNode> {
+    finalWeight: number;
+    edgeType: EpistemicEdgeType;
 }
-
-const nodeTypes: NodeTypes = {
-    keyword: KeywordNode,
-    center: CenterNode,
-};
 
 // ─── Props ───────────────────────────────────────────────────
 
 interface ConstellationCanvasProps {
-    keywords: Keyword[];
-    onNodeClick?: (keyword: Keyword) => void;
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+    selectedId?: string | null;
+    onNodeClick?: (node: GraphNode) => void;
     onPaneClick?: () => void;
+}
+
+// ─── Node sizing ─────────────────────────────────────────────
+
+function nodeRadius(n: SimNode): number {
+    return 8 + n.frequency * 3 + n.weight * 4;
+}
+
+function glowRadius(n: SimNode): number {
+    return nodeRadius(n) + 12 + n.frequency * 4;
 }
 
 // ─── Component ───────────────────────────────────────────────
 
 export default function ConstellationCanvas({
-    keywords,
+    nodes,
+    edges,
+    selectedId,
     onNodeClick,
     onPaneClick,
 }: ConstellationCanvasProps) {
-    // Build centre anchor nodes
-    const centerNodes: Node[] = useMemo(
-        () =>
-            (
-                Object.entries(ORIENTATION_CENTERS) as [
-                    Orientation,
-                    { x: number; y: number },
-                ][]
-            ).map(([orientation, pos]) => ({
-                id: `center-${orientation}`,
-                type: "center",
-                position: pos,
-                draggable: false,
-                selectable: false,
-                data: { orientation },
-            })),
-        [],
-    );
+    const svgRef = useRef<SVGSVGElement>(null);
+    const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
 
-    // Group keywords by orientation for angular offset
-    const groups = useMemo(() => {
-        const map = new Map<Orientation, Keyword[]>();
-        for (const kw of keywords) {
-            const list = map.get(kw.orientation) ?? [];
-            list.push(kw);
-            map.set(kw.orientation, list);
-        }
-        return map;
-    }, [keywords]);
+    // Convert to sim-friendly shapes
+    const simNodes: SimNode[] = nodes.map((n) => ({
+        id: n.id,
+        term: n.term,
+        orientation: n.orientation,
+        frequency: n.frequency,
+        weight: n.weight,
+        active: n.active,
+        sourcePapers: n.sourcePapers,
+    }));
 
-    // Build keyword nodes
-    const keywordNodes: Node[] = useMemo(() => {
-        const nodes: Node[] = [];
-        for (const [, group] of groups) {
-            group.forEach((kw, idx) => {
-                const pos = computeNodePosition(kw, idx, group.length);
-                nodes.push({
-                    id: kw.id,
-                    type: "keyword",
-                    position: pos,
-                    data: { keyword: kw },
-                });
-            });
-        }
-        return nodes;
-    }, [groups]);
+    const simLinks: SimLink[] = edges
+        .filter(
+            (e) =>
+                nodes.some((n) => n.id === e.source) &&
+                nodes.some((n) => n.id === e.target),
+        )
+        .map((e) => ({
+            source: e.source,
+            target: e.target,
+            finalWeight: e.finalWeight,
+            edgeType: e.edgeType,
+        }));
 
-    const allNodes = useMemo(
-        () => [...centerNodes, ...keywordNodes],
-        [centerNodes, keywordNodes],
-    );
-
+    // Stable callbacks
     const handleNodeClick = useCallback(
-        (_event: React.MouseEvent, node: Node) => {
-            if (node.type === "keyword" && onNodeClick) {
-                onNodeClick(node.data.keyword as Keyword);
+        (n: SimNode) => {
+            if (onNodeClick) {
+                const original = nodes.find((gn) => gn.id === n.id);
+                if (original) onNodeClick(original);
             }
         },
-        [onNodeClick],
+        [nodes, onNodeClick],
     );
 
+    const handlePaneClick = useCallback(() => {
+        if (onPaneClick) onPaneClick();
+    }, [onPaneClick]);
+
+    // ── D3 rendering ─────────────────────────────────────────
+    useEffect(() => {
+        if (!svgRef.current || simNodes.length === 0) return;
+
+        const svg = d3.select(svgRef.current);
+        const width = svgRef.current.clientWidth;
+        const height = svgRef.current.clientHeight;
+
+        svg.selectAll("*").remove();
+
+        // ── Defs: arrow markers for edge types ───────────────
+        const defs = svg.append("defs");
+
+        (
+            Object.entries(EDGE_TYPE_COLORS) as [EpistemicEdgeType, string][]
+        ).forEach(([type, color]) => {
+            defs.append("marker")
+                .attr("id", `arrow-${type}`)
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 20)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto-start-reverse")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", color)
+                .attr("fill-opacity", 0.5);
+        });
+
+        // ── Filter: glow ─────────────────────────────────────
+        const glowFilter = defs.append("filter").attr("id", "glow");
+        glowFilter
+            .append("feGaussianBlur")
+            .attr("stdDeviation", "6")
+            .attr("result", "blur");
+        const feMerge = glowFilter.append("feMerge");
+        feMerge.append("feMergeNode").attr("in", "blur");
+        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+        // ── Root group with zoom ─────────────────────────────
+        const g = svg.append("g");
+
+        const zoom = d3
+            .zoom<SVGSVGElement, unknown>()
+            .scaleExtent([0.15, 4])
+            .on("zoom", (event) => g.attr("transform", event.transform));
+
+        svg.call(zoom);
+
+        // Click on empty space
+        svg.on("click", (event) => {
+            if (event.target === svgRef.current) handlePaneClick();
+        });
+
+        // ── Simulation ─────────────────────────────────────
+        const simulation = d3
+            .forceSimulation<SimNode>(simNodes)
+            .force(
+                "link",
+                d3
+                    .forceLink<SimNode, SimLink>(simLinks)
+                    .id((d) => d.id)
+                    .distance(200)
+                    .strength((d) => d.finalWeight * 0.5),
+            )
+            .force("charge", d3.forceManyBody().strength(-800))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force(
+                "collision",
+                d3
+                    .forceCollide<SimNode>()
+                    .radius((d) => nodeRadius(d) + 20),
+            )
+            .velocityDecay(0.4);
+
+        simulationRef.current = simulation;
+
+        // ── Links ──────────────────────────────────────────
+        const linkG = g
+            .append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(simLinks)
+            .join("line")
+            .attr(
+                "stroke",
+                (d) => EDGE_TYPE_COLORS[d.edgeType] ?? "#1e293b",
+            )
+            .attr("stroke-opacity", (d) =>
+                d.finalWeight > 0.3 ? 0.6 : 0.25,
+            )
+            .attr("stroke-width", (d) =>
+                Math.max(1, d.finalWeight * 6),
+            )
+            .attr(
+                "marker-end",
+                (d) => `url(#arrow-${d.edgeType})`,
+            );
+
+        // ── Node groups ────────────────────────────────────
+        const nodeG = g
+            .append("g")
+            .attr("class", "nodes")
+            .selectAll<SVGGElement, SimNode>("g")
+            .data(simNodes)
+            .join("g")
+            .style("cursor", "pointer")
+            .on("click", (_event, d) => handleNodeClick(d))
+            .call(
+                d3
+                    .drag<SVGGElement, SimNode>()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended),
+            );
+
+        // Outer glow circle
+        nodeG
+            .append("circle")
+            .attr("class", "glow")
+            .attr("r", (d) => glowRadius(d))
+            .attr("fill", (d) => ORIENTATION_COLORS[d.orientation])
+            .attr("fill-opacity", 0.08)
+            .style("filter", "url(#glow)");
+
+        // Core circle
+        nodeG
+            .append("circle")
+            .attr("class", "core")
+            .attr("r", (d) => nodeRadius(d))
+            .attr("fill", (d) =>
+                d.active
+                    ? ORIENTATION_COLORS[d.orientation]
+                    : `${ORIENTATION_COLORS[d.orientation]}44`,
+            )
+            .attr("stroke", (d) =>
+                d.id === selectedId ? "#ffffff" : ORIENTATION_COLORS[d.orientation],
+            )
+            .attr("stroke-width", (d) => (d.id === selectedId ? 3 : 1.5))
+            .attr("stroke-opacity", (d) => (d.active ? 1 : 0.3));
+
+        // Keyword label
+        nodeG
+            .append("text")
+            .attr("dy", (d) => nodeRadius(d) + 16)
+            .attr("text-anchor", "middle")
+            .text((d) => d.term)
+            .attr("fill", (d) =>
+                d.id === selectedId ? "#ffffff" : "#94a3b8",
+            )
+            .attr("font-size", "11px")
+            .attr("font-weight", "600")
+            .style("text-transform", "uppercase")
+            .style("letter-spacing", "0.05em")
+            .style("pointer-events", "none")
+            .style("text-shadow", "0 2px 4px rgba(0,0,0,0.9)");
+
+        // Frequency badge (only for freq > 1)
+        nodeG
+            .filter((d) => d.frequency > 1)
+            .append("text")
+            .attr("dy", (d) => nodeRadius(d) + 28)
+            .attr("text-anchor", "middle")
+            .text((d) => `×${d.frequency}`)
+            .attr("fill", "#64748b")
+            .attr("font-size", "9px")
+            .attr("font-family", theme.fonts?.mono ?? "monospace")
+            .style("pointer-events", "none");
+
+        // ── Floating animation via gentle force reheat ─────
+        const floatTimer = d3.interval(() => {
+            simulation.alpha(0.05).restart();
+        }, 3000);
+
+        // ── Tick ─────────────────────────────────────────
+        simulation.on("tick", () => {
+            linkG
+                .attr("x1", (d) => (d.source as SimNode).x!)
+                .attr("y1", (d) => (d.source as SimNode).y!)
+                .attr("x2", (d) => (d.target as SimNode).x!)
+                .attr("y2", (d) => (d.target as SimNode).y!);
+
+            nodeG.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        });
+
+        // ── Drag handlers ────────────────────────────────
+        function dragstarted(event: d3.D3DragEvent<SVGGElement, SimNode, SimNode>) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+        function dragged(event: d3.D3DragEvent<SVGGElement, SimNode, SimNode>) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+        function dragended(event: d3.D3DragEvent<SVGGElement, SimNode, SimNode>) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+
+        return () => {
+            floatTimer.stop();
+            simulation.stop();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [nodes, edges, selectedId]);
+
+    // ── Update selected highlight without rebuilding ──────
+    useEffect(() => {
+        if (!svgRef.current) return;
+        const svg = d3.select(svgRef.current);
+
+        svg.selectAll<SVGCircleElement, SimNode>(".core")
+            .attr("stroke", (d) =>
+                d.id === selectedId ? "#ffffff" : ORIENTATION_COLORS[d.orientation],
+            )
+            .attr("stroke-width", (d) => (d.id === selectedId ? 3 : 1.5));
+
+        svg.selectAll<SVGCircleElement, SimNode>(".glow")
+            .attr("fill-opacity", (d) =>
+                d.id === selectedId ? 0.25 : 0.08,
+            );
+
+        svg.selectAll<SVGTextElement, SimNode>("text")
+            .filter(function () {
+                return (
+                    d3.select(this).attr("font-size") === "11px"
+                );
+            })
+            .attr("fill", (d) =>
+                d.id === selectedId ? "#ffffff" : "#94a3b8",
+            );
+    }, [selectedId]);
+
     return (
-        <div className={`w-full h-full ${theme.layout.canvasBg}`}>
-            <ReactFlow
-                nodes={allNodes}
-                edges={[]}
-                nodeTypes={nodeTypes}
-                onNodeClick={handleNodeClick}
-                onPaneClick={onPaneClick}
-                fitView
-                minZoom={0.3}
-                maxZoom={2}
-            >
-                <Background
-                    color={theme.viz.map.links.inactiveColor}
-                    gap={40}
-                />
-                <Controls />
-                <MiniMap
-                    nodeColor={(n) =>
-                        n.type === "center"
-                            ? ORIENTATION_COLORS[
-                            n.data.orientation as Orientation
-                            ]
-                            : theme.viz.nodes.labelColor
-                    }
-                    maskColor="#020617cc"
-                />
-            </ReactFlow>
-        </div>
+        <svg
+            ref={svgRef}
+            className="w-full h-full"
+            style={{ background: theme.layout.canvasBg }}
+        />
     );
 }

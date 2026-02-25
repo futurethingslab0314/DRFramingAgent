@@ -65,9 +65,10 @@ router.post("/ingest", async (req, res) => {
         const profile = await runProfilePaper({ title, abstract, tags, year });
 
         // Write suggested keywords to DB2
+        const paperSource = `zotero:${title}`;
         const keywordsToWrite = profile.suggested_keywords.map((kw) => ({
             ...kw,
-            source: "zotero_profile",
+            source: paperSource,
         }));
         const pageIds = await writeKeywordsToDB2(keywordsToWrite);
 

@@ -1,15 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
-// ConstellationPage — NOVAFRAME themed layout
+// ConstellationPage — NOVAFRAME themed layout with graph API
 // ═══════════════════════════════════════════════════════════════
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { theme } from "../design/theme";
 import type {
     Keyword,
+    GraphNode,
+    GraphEdge,
     EpistemicProfile,
     ArtifactProfile,
 } from "../types/keyword";
 import { fetchKeywords } from "../api/keywords";
+import { fetchGraph } from "../api/graph";
 import ConstellationCanvas from "../components/ConstellationCanvas";
 import KeywordInspector from "../components/KeywordInspector";
 import EpistemicSummary from "../components/EpistemicSummary";
@@ -50,20 +53,42 @@ function deriveProfiles(keywords: Keyword[]): {
 
 export default function ConstellationPage() {
     const [keywords, setKeywords] = useState<Keyword[]>([]);
+    const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
+    const [graphEdges, setGraphEdges] = useState<GraphEdge[]>([]);
     const [selected, setSelected] = useState<Keyword | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchKeywords()
-            .then((res) => setKeywords(res.keywords))
-            .catch(console.error)
-            .finally(() => setLoading(false));
+    // Fetch both keywords (for profiles/inspector) and graph (for canvas)
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [kwRes, graphRes] = await Promise.all([
+                fetchKeywords(),
+                fetchGraph(),
+            ]);
+            setKeywords(kwRes.keywords);
+            setGraphNodes(graphRes.nodes);
+            setGraphEdges(graphRes.edges);
+        } catch (err) {
+            console.error("Data load failed:", err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
     const handleNodeClick = useCallback(
-        (kw: Keyword) => setSelected(kw),
-        [],
+        (node: GraphNode) => {
+            // Find matching keyword for inspector
+            const kw = keywords.find((k) => k.id === node.id);
+            if (kw) setSelected(kw);
+        },
+        [keywords],
     );
+
     const handlePaneClick = useCallback(() => setSelected(null), []);
 
     const handleUpdated = useCallback(
@@ -79,16 +104,8 @@ export default function ConstellationPage() {
     );
 
     const handleSync = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await fetchKeywords();
-            setKeywords(res.keywords);
-        } catch (err) {
-            console.error("Sync failed:", err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        await loadData();
+    }, [loadData]);
 
     const profiles = useMemo(() => deriveProfiles(keywords), [keywords]);
 
@@ -115,7 +132,7 @@ export default function ConstellationPage() {
                 </h2>
                 <div className="flex items-center gap-3">
                     <span className={theme.typography.mono} style={{ color: theme.colors.text.dim }}>
-                        {keywords.length} keywords • {keywords.filter((k) => k.active).length} active
+                        {graphNodes.length} nodes • {graphEdges.length} edges • {keywords.filter((k) => k.active).length} active
                     </span>
                     <button
                         onClick={handleSync}
@@ -132,7 +149,9 @@ export default function ConstellationPage() {
                 {/* Canvas */}
                 <div className="flex-1">
                     <ConstellationCanvas
-                        keywords={keywords}
+                        nodes={graphNodes}
+                        edges={graphEdges}
+                        selectedId={selected?.id}
                         onNodeClick={handleNodeClick}
                         onPaneClick={handlePaneClick}
                     />
