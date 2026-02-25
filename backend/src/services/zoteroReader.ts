@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// ZoteroReader — fetch papers from Zotero user + group libraries
+// ZoteroReader — fetch papers from Zotero libraries or a single collection
 // ═══════════════════════════════════════════════════════════════
 
 const ZOTERO_BASE = "https://api.zotero.org";
@@ -34,11 +34,37 @@ function getConfig() {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
+    const collectionUrl = (process.env.ZOTERO_COLLECTION_URL ?? "").trim();
 
     if (!apiKey) throw new Error("ZOTERO_API_KEY is not set");
-    if (!userId) throw new Error("ZOTERO_USER_ID is not set");
 
-    return { apiKey, userId, groupIds };
+    let collectionTarget:
+        | { libraryType: "groups"; libraryId: string; collectionKey: string }
+        | undefined;
+
+    if (collectionUrl) {
+        const match = collectionUrl.match(
+            /zotero\.org\/groups\/(\d+)\/[^/]+\/collections\/([A-Z0-9]+)\/collection/i,
+        );
+        if (!match) {
+            throw new Error(
+                "ZOTERO_COLLECTION_URL format is invalid. Expected: https://www.zotero.org/groups/<groupId>/<groupName>/collections/<collectionKey>/collection",
+            );
+        }
+        collectionTarget = {
+            libraryType: "groups",
+            libraryId: match[1],
+            collectionKey: match[2].toUpperCase(),
+        };
+    }
+
+    if (!collectionTarget && !userId) {
+        throw new Error(
+            "ZOTERO_USER_ID is not set (required when ZOTERO_COLLECTION_URL is not provided)",
+        );
+    }
+
+    return { apiKey, userId, groupIds, collectionTarget };
 }
 
 // ─── Fetch helpers ───────────────────────────────────────────
@@ -124,9 +150,12 @@ function toZoteroPaper(item: ZoteroItemData): ZoteroPaper | null {
 export async function fetchItems(
     libraryType: "users" | "groups",
     libraryId: string,
+    collectionKey?: string,
 ): Promise<ZoteroPaper[]> {
     const { apiKey } = getConfig();
-    const url = `${ZOTERO_BASE}/${libraryType}/${libraryId}/items`;
+    const url = collectionKey
+        ? `${ZOTERO_BASE}/${libraryType}/${libraryId}/collections/${collectionKey}/items`
+        : `${ZOTERO_BASE}/${libraryType}/${libraryId}/items`;
     const raw = await fetchAllItems(url, apiKey);
 
     return raw
@@ -139,10 +168,19 @@ export async function fetchItems(
  * deduplicate by DOI or title.
  */
 export async function fetchAllLibraries(): Promise<ZoteroPaper[]> {
-    const { userId, groupIds } = getConfig();
+    const { userId, groupIds, collectionTarget } = getConfig();
+
+    // Collection mode: only fetch this single Zotero collection.
+    if (collectionTarget) {
+        return fetchItems(
+            collectionTarget.libraryType,
+            collectionTarget.libraryId,
+            collectionTarget.collectionKey,
+        );
+    }
 
     const promises: Promise<ZoteroPaper[]>[] = [
-        fetchItems("users", userId),
+        fetchItems("users", userId!),
         ...groupIds.map((gid) => fetchItems("groups", gid)),
     ];
 
