@@ -32,6 +32,7 @@
             "owner?": "string"
         },
         "FramingRunResponse": {
+            "title": "string",
             "research_question": "string",
             "background": "string",
             "purpose": "string",

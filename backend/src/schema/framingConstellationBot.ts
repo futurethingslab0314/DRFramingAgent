@@ -100,6 +100,7 @@ export interface ReasoningControl {
 // ─── Framing Output ───────────────────────────────────────────
 
 export interface FramingOutput {
+    title: string;
     /** 1-2 sentences */
     background: string;
     /** 1-2 sentences */

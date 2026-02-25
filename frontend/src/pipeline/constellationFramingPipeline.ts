@@ -8,6 +8,7 @@ import { artifactRoleInfluencer } from "../../.agent/skills/ArtifactRoleInfluenc
 import { constellationRuleEngine } from "../../.agent/skills/ConstellationRuleEngine/constellationRuleEngine";
 import { framingGeneratorMVP } from "../../.agent/skills/FramingGeneratorMVP/framingGeneratorMVP";
 import { constellationAbstractGenerator } from "../../.agent/skills/ConstellationAbstractGenerator/constellationAbstractGenerator";
+import { titleGenerator } from "../../.agent/skills/TitleGenerator/titleGenerator";
 
 // ─── Pipeline I/O ────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export interface PipelineInput {
 }
 
 export interface PipelineOutput {
+    title: string;
     research_question: string;
     background: string;
     purpose: string;
@@ -80,8 +82,26 @@ export async function runConstellationFramingPipeline(
         callLLM,
     );
 
+    // ── Step 6: TitleGenerator (LLM) ─────────────────────────
+    const titleResult = await titleGenerator(
+        {
+            research_question: framingResult.research_question,
+            background: framingResult.background,
+            purpose: framingResult.purpose,
+            method: framingResult.method,
+            result: framingResult.result,
+            contribution: framingResult.contribution,
+            abstract_en: abstractResult.abstract_en,
+            abstract_zh: abstractResult.abstract_zh,
+            keyword_map_by_orientation: syncResult.keyword_map_by_orientation,
+            epistemic_profile: syncResult.epistemic_profile,
+        },
+        callLLM,
+    );
+
     // ── Combine & return ──────────────────────────────────────
     return {
+        title: titleResult.title,
         research_question: framingResult.research_question,
         background: framingResult.background,
         purpose: framingResult.purpose,

@@ -43,7 +43,12 @@ export const theme = {
         }
     },
 
-    // 3. Typography
+    // 3. Fonts
+    fonts: {
+        mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace",
+    },
+
+    // 4. Typography
     typography: {
         brand: "text-xs font-black uppercase tracking-[0.3em]",
         heading: "text-2xl font-black uppercase tracking-tighter text-white",

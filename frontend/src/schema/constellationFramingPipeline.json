@@ -96,9 +96,30 @@
                 "abstract_en": "$.state.abstract_en",
                 "abstract_zh": "$.state.abstract_zh"
             }
+        },
+        {
+            "id": "step_6",
+            "skill": "TitleGenerator",
+            "type": "llm",
+            "input": {
+                "research_question": "$.state.research_question",
+                "background": "$.state.background",
+                "purpose": "$.state.purpose",
+                "method": "$.state.method",
+                "result": "$.state.result",
+                "contribution": "$.state.contribution",
+                "abstract_en": "$.state.abstract_en",
+                "abstract_zh": "$.state.abstract_zh",
+                "keyword_map_by_orientation": "$.state.keyword_map_by_orientation",
+                "epistemic_profile": "$.state.epistemic_profile"
+            },
+            "output": {
+                "title": "$.state.title"
+            }
         }
     ],
     "outputs": {
+        "title": "$.state.title",
         "research_question": "$.state.research_question",
         "background": "$.state.background",
         "purpose": "$.state.purpose",

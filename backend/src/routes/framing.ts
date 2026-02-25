@@ -11,7 +11,7 @@ const router = Router();
 /**
  * POST /api/framing/run
  * Run the full ConstellationFramingPipeline.
- * Auto-fetches active keywords from DB2, runs the 5-step pipeline.
+ * Auto-fetches active keywords from DB2, runs the 6-step pipeline.
  *
  * Body: { user_context: string, owner?: string }
  */

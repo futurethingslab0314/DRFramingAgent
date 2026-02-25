@@ -40,8 +40,8 @@ export async function saveFraming(
 
 /** Refine user-edited framing using LLM for academic polish */
 export async function refineFraming(
-    framing: Omit<FramingRunResponse, "epistemic_profile" | "artifact_profile">,
-): Promise<Omit<FramingRunResponse, "epistemic_profile" | "artifact_profile">> {
+    framing: Omit<FramingRunResponse, "title" | "epistemic_profile" | "artifact_profile">,
+): Promise<Omit<FramingRunResponse, "title" | "epistemic_profile" | "artifact_profile">> {
     const res = await fetch("/api/framing/refine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,4 +55,3 @@ export async function refineFraming(
     }
     return res.json();
 }
-

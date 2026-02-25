@@ -12,6 +12,7 @@ import EpistemicSummary from "./EpistemicSummary";
 // ─── Field labels ────────────────────────────────────────────
 
 const FIELD_LABELS: Record<FramingField, string> = {
+    title: "Title",
     research_question: "Research Question",
     background: "Background",
     purpose: "Purpose",
@@ -57,7 +58,7 @@ export default function FramingCard({ result }: FramingCardProps) {
         setSaving(true);
         setSaveResult(null);
         try {
-            const res = await saveFraming(edited, edited.research_question);
+            const res = await saveFraming(edited, edited.title || edited.research_question);
             setSaveResult(`✓ Saved → Notion DB1 (${res.notion_page_id.slice(0, 8)}…)`);
             setDirty(false);
         } catch (err) {
@@ -200,7 +201,7 @@ export default function FramingCard({ result }: FramingCardProps) {
                                 onChange={(e) =>
                                     handleFieldChange(field, e.target.value)
                                 }
-                                rows={field === "research_question" ? 2 : 3}
+                                rows={field === "research_question" || field === "title" ? 2 : 3}
                                 className={textareaClass}
                                 style={{ fontFamily: "inherit", lineHeight: 1.6 }}
                             />

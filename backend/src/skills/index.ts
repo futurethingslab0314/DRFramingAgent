@@ -18,3 +18,6 @@ export type { AbstractGeneratorInput, AbstractGeneratorOutput } from "./constell
 
 export { paperEpistemicProfiler } from "./paperEpistemicProfiler.js";
 export type { PaperProfilerInput, PaperProfilerOutput } from "./paperEpistemicProfiler.js";
+
+export { titleGenerator } from "./titleGenerator.js";
+export type { TitleGeneratorInput, TitleGeneratorOutput } from "./titleGenerator.js";

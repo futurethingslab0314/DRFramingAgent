@@ -10,6 +10,7 @@ export interface FramingRunRequest {
 }
 
 export interface FramingRunResponse {
+    title: string;
     research_question: string;
     background: string;
     purpose: string;
@@ -32,8 +33,9 @@ export interface FramingSaveResponse {
     notion_page_id: string;
 }
 
-/** The 6 core framing fields (excluding abstracts and profiles) */
+/** Core editable framing fields (excluding abstracts and profiles) */
 export const FRAMING_FIELDS = [
+    "title",
     "research_question",
     "background",
     "purpose",

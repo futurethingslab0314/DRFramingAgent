@@ -10,6 +10,7 @@ import { constellationRuleEngine } from "../skills/constellationRuleEngine.js";
 import { framingGeneratorMVP } from "../skills/framingGeneratorMVP.js";
 import { constellationAbstractGenerator } from "../skills/constellationAbstractGenerator.js";
 import { paperEpistemicProfiler } from "../skills/paperEpistemicProfiler.js";
+import { titleGenerator } from "../skills/titleGenerator.js";
 
 import type { KeywordInput } from "../skills/constellationKeywordSync.js";
 import type { PaperProfilerInput, PaperProfilerOutput } from "../skills/paperEpistemicProfiler.js";
@@ -22,6 +23,7 @@ import type {
 // ─── Pipeline output type ────────────────────────────────────
 
 export interface PipelineResult {
+    title: string;
     research_question: string;
     background: string;
     purpose: string;
@@ -37,9 +39,9 @@ export interface PipelineResult {
 // ─── Full constellation framing pipeline ─────────────────────
 
 /**
- * Runs the 5-step ConstellationFramingPipeline:
+ * Runs the 6-step ConstellationFramingPipeline:
  *   KeywordSync → ArtifactRoleInfluencer → RuleEngine
- *   → FramingGeneratorMVP → AbstractGenerator
+ *   → FramingGeneratorMVP → AbstractGenerator → TitleGenerator
  */
 export async function runPipeline(
     keywords: KeywordInput[],
@@ -85,7 +87,25 @@ export async function runPipeline(
         callLLM,
     );
 
+    // Step 6: TitleGenerator (LLM)
+    const titleResult = await titleGenerator(
+        {
+            research_question: framingResult.research_question,
+            background: framingResult.background,
+            purpose: framingResult.purpose,
+            method: framingResult.method,
+            result: framingResult.result,
+            contribution: framingResult.contribution,
+            abstract_en: abstractResult.abstract_en,
+            abstract_zh: abstractResult.abstract_zh,
+            keyword_map_by_orientation: syncResult.keyword_map_by_orientation,
+            epistemic_profile: syncResult.epistemic_profile,
+        },
+        callLLM,
+    );
+
     return {
+        title: titleResult.title,
         ...framingResult,
         abstract_en: abstractResult.abstract_en,
         abstract_zh: abstractResult.abstract_zh,
