@@ -112,7 +112,7 @@ export default function FramingCard({ result }: FramingCardProps) {
         "w-full bg-slate-900/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 resize-y transition-colors";
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col">
             {/* ── Sticky Action Bar ─────────────────────────── */}
             <div
                 className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 mb-4 rounded-xl border"
@@ -179,7 +179,7 @@ export default function FramingCard({ result }: FramingCardProps) {
             </div>
 
             {/* ── Scrollable Content ────────────────────────── */}
-            <div className="flex-1 overflow-y-auto space-y-4">
+            <div className="space-y-4 pb-24 pr-1">
                 {/* Profile charts */}
                 <EpistemicSummary
                     epistemicProfile={result.epistemic_profile}

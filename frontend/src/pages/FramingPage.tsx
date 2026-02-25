@@ -37,7 +37,7 @@ export default function FramingPage() {
 
                 {/* Right: result */}
                 <div
-                    className={`flex-1 overflow-y-auto p-6 ${theme.layout.scrollbar}`}
+                    className={`flex-1 overflow-y-auto p-6 pb-10 ${theme.layout.scrollbar}`}
                 >
                     {result ? (
                         <FramingCard result={result} />
