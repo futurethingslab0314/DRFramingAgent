@@ -24,7 +24,7 @@ export interface TitleGeneratorInput {
 }
 
 export interface TitleGeneratorOutput {
-    title: string;
+    title_en: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -120,5 +120,5 @@ export async function titleGenerator(
         throw new Error('Missing or empty field: "title"');
     }
 
-    return { title: title.trim() };
+    return { title_en: title.trim() };
 }

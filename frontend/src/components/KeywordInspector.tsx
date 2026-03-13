@@ -12,6 +12,7 @@ import type {
 } from "../types/keyword";
 import { ORIENTATION_COLORS } from "../types/keyword";
 import { patchKeyword } from "../api/keywords";
+import { useI18n } from "../i18n/useI18n";
 
 const ORIENTATIONS: Orientation[] = [
     "exploratory",
@@ -44,6 +45,7 @@ export default function KeywordInspector({
     onClose,
     onUpdated,
 }: KeywordInspectorProps) {
+    const { t } = useI18n();
     const [draft, setDraft] = useState<Partial<Keyword>>({});
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export default function KeywordInspector({
             {/* Orientation */}
             <div className={`${theme.components.innerCard} mb-3`}>
                 <label className={`${theme.typography.label} block mb-1`} style={{ color: theme.colors.text.dim }}>
-                    Orientation
+                    {t("inspector.orientation")}
                 </label>
                 <select
                     className={`${theme.components.input} w-full`}
@@ -115,7 +117,7 @@ export default function KeywordInspector({
                 >
                     {ORIENTATIONS.map((o) => (
                         <option key={o} value={o}>
-                            {o.replace("_", " ")}
+                            {t(`orientation.${o}` as const)}
                         </option>
                     ))}
                 </select>
@@ -124,7 +126,7 @@ export default function KeywordInspector({
             {/* Artifact Role */}
             <div className={`${theme.components.innerCard} mb-3`}>
                 <label className={`${theme.typography.label} block mb-1`} style={{ color: theme.colors.text.dim }}>
-                    Artifact Role
+                    {t("inspector.artifact_role")}
                 </label>
                 <select
                     className={`${theme.components.input} w-full`}
@@ -133,7 +135,7 @@ export default function KeywordInspector({
                 >
                     {ARTIFACT_ROLES.map((r) => (
                         <option key={r} value={r}>
-                            {r.replace(/_/g, " ")}
+                            {t(`artifact.${r}` as const)}
                         </option>
                     ))}
                 </select>
@@ -142,7 +144,7 @@ export default function KeywordInspector({
             {/* Pipeline Role */}
             <div className={`${theme.components.innerCard} mb-3`}>
                 <label className={`${theme.typography.label} block mb-1`} style={{ color: theme.colors.text.dim }}>
-                    Pipeline Role
+                    {t("inspector.pipeline_role")}
                 </label>
                 <select
                     className={`${theme.components.input} w-full`}
@@ -154,10 +156,10 @@ export default function KeywordInspector({
                         )
                     }
                 >
-                    <option value="">(none)</option>
+                    <option value="">{t("inspector.none")}</option>
                     {PIPELINE_ROLES.map((p) => (
                         <option key={p} value={p}>
-                            {p.replace(/_/g, " ")}
+                            {t(`pipeline.${p}` as const)}
                         </option>
                     ))}
                 </select>
@@ -166,7 +168,7 @@ export default function KeywordInspector({
             {/* Weight slider */}
             <div className={`${theme.components.innerCard} mb-3`}>
                 <label className={`${theme.typography.label} block mb-1`} style={{ color: theme.colors.text.dim }}>
-                    Weight: {val("weight").toFixed(2)}
+                    {t("inspector.weight")}: {val("weight").toFixed(2)}
                 </label>
                 <input
                     type="range"
@@ -188,14 +190,14 @@ export default function KeywordInspector({
                     className="w-4 h-4 accent-blue-500"
                 />
                 <span className={theme.typography.label} style={{ color: theme.colors.text.normal }}>
-                    Active
+                    {t("inspector.active")}
                 </span>
             </div>
 
             {/* Notes */}
             <div className={`${theme.components.innerCard} mb-3`}>
                 <label className={`${theme.typography.label} block mb-1`} style={{ color: theme.colors.text.dim }}>
-                    Notes
+                    {t("inspector.notes")}
                 </label>
                 <textarea
                     rows={3}
@@ -209,7 +211,7 @@ export default function KeywordInspector({
             {keyword.source && (
                 <div className="mb-4">
                     <span className={theme.components.badge} style={{ color: theme.colors.text.dim }}>
-                        source: {keyword.source}
+                        {t("inspector.source")}: {keyword.source}
                     </span>
                 </div>
             )}
@@ -227,7 +229,7 @@ export default function KeywordInspector({
                 onClick={handleSave}
                 disabled={saving || Object.keys(draft).length === 0}
             >
-                {saving ? "Saving…" : "Save Changes"}
+                {saving ? t("inspector.saving") : t("inspector.save")}
             </button>
         </aside>
     );

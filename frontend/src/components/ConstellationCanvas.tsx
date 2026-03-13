@@ -46,6 +46,7 @@ interface Region {
 interface ConstellationCanvasProps {
     nodes: GraphNode[];
     edges: GraphEdge[];
+    orientationLabels: Record<Orientation, string>;
     selectedId?: string | null;
     onNodeClick?: (node: GraphNode) => void;
     onPaneClick?: () => void;
@@ -66,6 +67,7 @@ function glowRadius(n: SimNode): number {
 export default function ConstellationCanvas({
     nodes,
     edges,
+    orientationLabels,
     selectedId,
     onNodeClick,
     onPaneClick,
@@ -131,28 +133,28 @@ export default function ConstellationCanvas({
                 y: pad,
                 width: regionWidth,
                 height: regionHeight,
-                label: "EXPLORATORY",
+                label: orientationLabels.exploratory.toUpperCase(),
             },
             critical: {
                 x: pad * 2 + regionWidth,
                 y: pad,
                 width: regionWidth,
                 height: regionHeight,
-                label: "CRITICAL",
+                label: orientationLabels.critical.toUpperCase(),
             },
             problem_solving: {
                 x: pad,
                 y: pad * 2 + regionHeight,
                 width: regionWidth,
                 height: regionHeight,
-                label: "PROBLEM SOLVING",
+                label: orientationLabels.problem_solving.toUpperCase(),
             },
             constructive: {
                 x: pad * 2 + regionWidth,
                 y: pad * 2 + regionHeight,
                 width: regionWidth,
                 height: regionHeight,
-                label: "CONSTRUCTIVE",
+                label: orientationLabels.constructive.toUpperCase(),
             },
         };
 

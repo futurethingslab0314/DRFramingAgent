@@ -5,10 +5,53 @@ import {
     writeFramingToDB1,
 } from "../services/notionService.js";
 import { callLLM } from "../services/llmService.js";
+import { constellationAbstractGenerator } from "../skills/constellationAbstractGenerator.js";
+import { titleGenerator } from "../skills/titleGenerator.js";
+import { bilingualFramingLocalizer } from "../skills/bilingualFramingLocalizer.js";
 import {
     composeResearchContext,
     parseStructuredResearchContext,
 } from "../utils/researchContext.js";
+import type { FramingResult } from "../services/notionService.js";
+
+function buildTitleContext(activeKeywords: Awaited<ReturnType<typeof fetchKeywordsFromDB2>>) {
+    const keyword_map_by_orientation = {
+        exploratory: activeKeywords
+            .filter((kw) => kw.orientation === "exploratory")
+            .map((kw) => kw.term),
+        critical: activeKeywords
+            .filter((kw) => kw.orientation === "critical")
+            .map((kw) => kw.term),
+        problem_solving: activeKeywords
+            .filter((kw) => kw.orientation === "problem_solving")
+            .map((kw) => kw.term),
+        constructive: activeKeywords
+            .filter((kw) => kw.orientation === "constructive")
+            .map((kw) => kw.term),
+    };
+
+    const total = activeKeywords.reduce((sum, kw) => sum + kw.weight, 0) || 1;
+    const epistemic_profile = {
+        exploratory:
+            activeKeywords
+                .filter((kw) => kw.orientation === "exploratory")
+                .reduce((sum, kw) => sum + kw.weight, 0) / total,
+        critical:
+            activeKeywords
+                .filter((kw) => kw.orientation === "critical")
+                .reduce((sum, kw) => sum + kw.weight, 0) / total,
+        problem_solving:
+            activeKeywords
+                .filter((kw) => kw.orientation === "problem_solving")
+                .reduce((sum, kw) => sum + kw.weight, 0) / total,
+        constructive:
+            activeKeywords
+                .filter((kw) => kw.orientation === "constructive")
+                .reduce((sum, kw) => sum + kw.weight, 0) / total,
+    };
+
+    return { keyword_map_by_orientation, epistemic_profile };
+}
 
 const router = Router();
 
@@ -62,12 +105,16 @@ router.post("/save", async (req, res) => {
     try {
         const { framing, title, owner } = req.body;
 
-        if (!framing || !framing.research_question) {
-            res.status(400).json({ error: "framing object with research_question is required" });
+        if (!framing || !framing.research_question?.en) {
+            res.status(400).json({ error: "framing object with bilingual research_question is required" });
             return;
         }
 
-        const notionPageId = await writeFramingToDB1(framing, title, owner);
+        const notionPageId = await writeFramingToDB1(
+            framing as FramingResult,
+            title ?? framing.title?.en,
+            owner,
+        );
 
         res.json({
             saved: true,
@@ -83,14 +130,23 @@ router.post("/save", async (req, res) => {
  * POST /api/framing/refine
  * Refine user-edited framing fields using LLM for academic polish and logical coherence.
  *
- * Body: { research_question, background, purpose, method, result, contribution, abstract_en, abstract_zh }
+ * Body: bilingual FramingRunResponse payload without profiles changes
  */
 router.post("/refine", async (req, res) => {
     try {
-        const { research_question, background, purpose, method, result, contribution, abstract_en, abstract_zh } = req.body;
+        const {
+            research_question,
+            background,
+            purpose,
+            method,
+            result,
+            contribution,
+            epistemic_profile,
+            artifact_profile,
+        } = req.body;
 
-        if (!research_question) {
-            res.status(400).json({ error: "research_question is required" });
+        if (!research_question?.en) {
+            res.status(400).json({ error: "bilingual research_question is required" });
             return;
         }
 
@@ -102,28 +158,95 @@ Guidelines:
 2. Ensure logical coherence across all fields (background → purpose → method → result → contribution)
 3. Tighten prose — remove redundancy, improve clarity
 4. Ensure the research question aligns with the purpose and method
-5. Make abstracts concise yet comprehensive
-6. Preserve the user's core arguments and terminology
-7. Do NOT change the fundamental research direction
+5. Preserve the user's core arguments and terminology
+6. Do NOT change the fundamental research direction
 
 Return a JSON object with exactly these fields:
-{ "research_question", "background", "purpose", "method", "result", "contribution", "abstract_en", "abstract_zh" }`;
+{ "research_question", "background", "purpose", "method", "result", "contribution" }`;
 
         const user = JSON.stringify({
-            research_question,
-            background,
-            purpose,
-            method,
-            result,
-            contribution,
-            abstract_en,
-            abstract_zh,
+            research_question: research_question.en,
+            background: background.en,
+            purpose: purpose.en,
+            method: method.en,
+            result: result.en,
+            contribution: contribution.en,
         });
 
         const raw = await callLLM(system, `Please refine the following research framing:\n${user}`);
-        const refined = JSON.parse(raw);
+        const refined = JSON.parse(raw) as Record<string, unknown>;
 
-        res.json(refined);
+        const refinedEnglish = {
+            research_question: String(refined.research_question ?? "").trim(),
+            background: String(refined.background ?? "").trim(),
+            purpose: String(refined.purpose ?? "").trim(),
+            method: String(refined.method ?? "").trim(),
+            result: String(refined.result ?? "").trim(),
+            contribution: String(refined.contribution ?? "").trim(),
+        };
+
+        const missing = Object.entries(refinedEnglish).find(([, value]) => !value);
+        if (missing) {
+            throw new Error(`Missing or empty field: "${missing[0]}"`);
+        }
+
+        const [allKeywords, abstract] = await Promise.all([
+            fetchKeywordsFromDB2(),
+            constellationAbstractGenerator(refinedEnglish, callLLM),
+        ]);
+        const activeKeywords = allKeywords.filter((kw) => kw.active);
+        const titleContext = buildTitleContext(activeKeywords);
+        const englishTitle = await titleGenerator(
+            {
+                ...refinedEnglish,
+                abstract_en: abstract.en,
+                abstract_zh: abstract.zh,
+                ...titleContext,
+            },
+            callLLM,
+        );
+
+        const localized = await bilingualFramingLocalizer(
+            {
+                title: englishTitle.title_en,
+                ...refinedEnglish,
+            },
+            callLLM,
+        );
+
+        res.json({
+            title: {
+                en: englishTitle.title_en,
+                zh: localized.title,
+            },
+            research_question: {
+                en: refinedEnglish.research_question,
+                zh: localized.research_question,
+            },
+            background: {
+                en: refinedEnglish.background,
+                zh: localized.background,
+            },
+            purpose: {
+                en: refinedEnglish.purpose,
+                zh: localized.purpose,
+            },
+            method: {
+                en: refinedEnglish.method,
+                zh: localized.method,
+            },
+            result: {
+                en: refinedEnglish.result,
+                zh: localized.result,
+            },
+            contribution: {
+                en: refinedEnglish.contribution,
+                zh: localized.contribution,
+            },
+            abstract,
+            epistemic_profile,
+            artifact_profile,
+        });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         res.status(500).json({ error: message });

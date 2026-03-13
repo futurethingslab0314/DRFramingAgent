@@ -99,21 +99,25 @@ export interface ReasoningControl {
 
 // ─── Framing Output ───────────────────────────────────────────
 
+export interface BilingualText {
+    en: string;
+    zh: string;
+}
+
 export interface FramingOutput {
-    title: string;
+    title: BilingualText;
     /** 1-2 sentences */
-    background: string;
+    background: BilingualText;
     /** 1-2 sentences */
-    purpose: string;
+    purpose: BilingualText;
     /** 1-2 sentences */
-    method: string;
+    method: BilingualText;
     /** 1-2 sentences */
-    result: string;
+    result: BilingualText;
     /** 1-2 sentences */
-    contribution: string;
-    research_question: string;
-    abstract_en: string;
-    abstract_zh: string;
+    contribution: BilingualText;
+    research_question: BilingualText;
+    abstract: BilingualText;
 }
 
 // ─── Shared State ─────────────────────────────────────────────

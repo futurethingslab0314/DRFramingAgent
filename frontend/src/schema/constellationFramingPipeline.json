@@ -73,12 +73,12 @@
                 "rule_engine_output": "$.state.reasoning_control"
             },
             "output": {
-                "research_question": "$.state.research_question",
-                "background": "$.state.background",
-                "purpose": "$.state.purpose",
-                "method": "$.state.method",
-                "result": "$.state.result",
-                "contribution": "$.state.contribution"
+                "research_question_en": "$.state.research_question_en",
+                "background_en": "$.state.background_en",
+                "purpose_en": "$.state.purpose_en",
+                "method_en": "$.state.method_en",
+                "result_en": "$.state.result_en",
+                "contribution_en": "$.state.contribution_en"
             }
         },
         {
@@ -102,31 +102,30 @@
             "skill": "TitleGenerator",
             "type": "llm",
             "input": {
-                "research_question": "$.state.research_question",
-                "background": "$.state.background",
-                "purpose": "$.state.purpose",
-                "method": "$.state.method",
-                "result": "$.state.result",
-                "contribution": "$.state.contribution",
+                "research_question": "$.state.research_question_en",
+                "background": "$.state.background_en",
+                "purpose": "$.state.purpose_en",
+                "method": "$.state.method_en",
+                "result": "$.state.result_en",
+                "contribution": "$.state.contribution_en",
                 "abstract_en": "$.state.abstract_en",
                 "abstract_zh": "$.state.abstract_zh",
                 "keyword_map_by_orientation": "$.state.keyword_map_by_orientation",
                 "epistemic_profile": "$.state.epistemic_profile"
             },
             "output": {
-                "title": "$.state.title"
+                "title_en": "$.state.title_en"
             }
         }
     ],
     "outputs": {
-        "title": "$.state.title",
-        "research_question": "$.state.research_question",
-        "background": "$.state.background",
-        "purpose": "$.state.purpose",
-        "method": "$.state.method",
-        "result": "$.state.result",
-        "contribution": "$.state.contribution",
-        "abstract_en": "$.state.abstract_en",
-        "abstract_zh": "$.state.abstract_zh"
+        "title": { "en": "$.state.title_en", "zh": "$.state.title_zh" },
+        "research_question": { "en": "$.state.research_question_en", "zh": "$.state.research_question_zh" },
+        "background": { "en": "$.state.background_en", "zh": "$.state.background_zh" },
+        "purpose": { "en": "$.state.purpose_en", "zh": "$.state.purpose_zh" },
+        "method": { "en": "$.state.method_en", "zh": "$.state.method_zh" },
+        "result": { "en": "$.state.result_en", "zh": "$.state.result_zh" },
+        "contribution": { "en": "$.state.contribution_en", "zh": "$.state.contribution_zh" },
+        "abstract": { "en": "$.state.abstract_en", "zh": "$.state.abstract_zh" }
     }
 }

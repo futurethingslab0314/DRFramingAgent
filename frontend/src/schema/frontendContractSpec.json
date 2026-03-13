@@ -38,15 +38,14 @@
             "owner?": "string"
         },
         "FramingRunResponse": {
-            "title": "string",
-            "research_question": "string",
-            "background": "string",
-            "purpose": "string",
-            "method": "string",
-            "result": "string",
-            "contribution": "string",
-            "abstract_en": "string",
-            "abstract_zh": "string",
+            "title": { "en": "string", "zh": "string" },
+            "research_question": { "en": "string", "zh": "string" },
+            "background": { "en": "string", "zh": "string" },
+            "purpose": { "en": "string", "zh": "string" },
+            "method": { "en": "string", "zh": "string" },
+            "result": { "en": "string", "zh": "string" },
+            "contribution": { "en": "string", "zh": "string" },
+            "abstract": { "en": "string", "zh": "string" },
             "epistemic_profile": "EpistemicProfile",
             "artifact_profile": "ArtifactProfile"
         }

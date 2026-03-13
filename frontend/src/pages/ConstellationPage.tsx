@@ -17,6 +17,7 @@ import ConstellationCanvas from "../components/ConstellationCanvas";
 import KeywordInspector from "../components/KeywordInspector";
 import EpistemicSummary from "../components/EpistemicSummary";
 import ZoteroIngest from "../components/ZoteroIngest";
+import { useI18n } from "../i18n/useI18n";
 
 // ─── Derive profiles from active keywords ────────────────────
 
@@ -52,6 +53,7 @@ function deriveProfiles(keywords: Keyword[]): {
 // ─── Page component ──────────────────────────────────────────
 
 export default function ConstellationPage() {
+    const { t } = useI18n();
     const [keywords, setKeywords] = useState<Keyword[]>([]);
     const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
     const [graphEdges, setGraphEdges] = useState<GraphEdge[]>([]);
@@ -130,7 +132,7 @@ export default function ConstellationPage() {
                 className={`flex items-center justify-center h-screen ${theme.layout.mainBg}`}
             >
                 <span className={theme.typography.subheading}>
-                    Loading constellation…
+                    {t("constellation.loading")}
                 </span>
             </div>
         );
@@ -143,18 +145,18 @@ export default function ConstellationPage() {
                 className={`${theme.layout.headerHeight} flex items-center justify-between px-6 border-b ${theme.layout.glassBorder} ${theme.layout.panelBg} ${theme.layout.glassEffect}`}
             >
                 <h2 className={theme.typography.heading} style={{ fontSize: 18 }}>
-                    Constellation Map
+                    {t("constellation.header")}
                 </h2>
                 <div className="flex items-center gap-3">
                     <span className={theme.typography.mono} style={{ color: theme.colors.text.dim }}>
-                        {visibleGraphNodes.length} nodes • {visibleGraphEdges.length} edges • {keywords.filter((k) => k.active).length} active
+                        {visibleGraphNodes.length} / {visibleGraphEdges.length} / {keywords.filter((k) => k.active).length} {t("constellation.stats")}
                     </span>
                     <button
                         onClick={handleSync}
                         disabled={loading}
                         className={theme.components.buttonGhost}
                     >
-                        {loading ? "Syncing…" : "↻ Sync"}
+                        {loading ? t("constellation.syncing") : `↻ ${t("constellation.sync")}`}
                     </button>
                 </div>
             </header>
@@ -166,6 +168,12 @@ export default function ConstellationPage() {
                     <ConstellationCanvas
                         nodes={visibleGraphNodes}
                         edges={visibleGraphEdges}
+                        orientationLabels={{
+                            exploratory: t("orientation.exploratory"),
+                            critical: t("orientation.critical"),
+                            problem_solving: t("orientation.problem_solving"),
+                            constructive: t("orientation.constructive"),
+                        }}
                         selectedId={selected?.id}
                         onNodeClick={handleNodeClick}
                         onPaneClick={handlePaneClick}

@@ -2,6 +2,8 @@
 // ConstellationAbstractGenerator — LLM-backed skill
 // ═══════════════════════════════════════════════════════════════
 
+import type { BilingualText } from "../schema/framingConstellationBot.js";
+
 // ─── Input / Output types ────────────────────────────────────
 
 export interface AbstractGeneratorInput {
@@ -12,10 +14,7 @@ export interface AbstractGeneratorInput {
     contribution: string;
 }
 
-export interface AbstractGeneratorOutput {
-    abstract_en: string;
-    abstract_zh: string;
-}
+export type AbstractGeneratorOutput = BilingualText;
 
 // ─── Prompt builders ─────────────────────────────────────────
 
@@ -89,7 +88,7 @@ export async function constellationAbstractGenerator(
     }
 
     return {
-        abstract_en: abstractEn.trim(),
-        abstract_zh: abstractZh.trim(),
+        en: abstractEn.trim(),
+        zh: abstractZh.trim(),
     };
 }

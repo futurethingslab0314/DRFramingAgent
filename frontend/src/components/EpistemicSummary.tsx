@@ -5,6 +5,7 @@
 import { theme } from "../design/theme";
 import type { EpistemicProfile, ArtifactProfile } from "../types/keyword";
 import { ORIENTATION_COLORS, ARTIFACT_ROLE_COLORS } from "../types/keyword";
+import { useI18n } from "../i18n/useI18n";
 
 interface EpistemicSummaryProps {
     epistemicProfile: EpistemicProfile;
@@ -63,6 +64,8 @@ export default function EpistemicSummary({
     epistemicProfile,
     artifactProfile,
 }: EpistemicSummaryProps) {
+    const { t } = useI18n();
+
     return (
         <div className={theme.components.innerCard}>
             {/* Epistemic */}
@@ -70,7 +73,7 @@ export default function EpistemicSummary({
                 <h4
                     className={`${theme.typography.subheading} mb-2`}
                 >
-                    Epistemic Profile
+                    {t("summary.epistemic")}
                 </h4>
                 {(
                     Object.entries(epistemicProfile) as [
@@ -80,7 +83,7 @@ export default function EpistemicSummary({
                 ).map(([key, val]) => (
                     <Bar
                         key={key}
-                        label={key}
+                        label={t(`orientation.${key}` as const)}
                         value={val}
                         color={ORIENTATION_COLORS[key]}
                     />
@@ -92,7 +95,7 @@ export default function EpistemicSummary({
                 <h4
                     className={`${theme.typography.subheading} mb-2`}
                 >
-                    Artifact Profile
+                    {t("summary.artifact")}
                 </h4>
                 {(
                     Object.entries(artifactProfile) as [
@@ -102,7 +105,7 @@ export default function EpistemicSummary({
                 ).map(([key, val]) => (
                     <Bar
                         key={key}
-                        label={key}
+                        label={t(`artifact.${key}` as const)}
                         value={val}
                         color={
                             ARTIFACT_ROLE_COLORS[

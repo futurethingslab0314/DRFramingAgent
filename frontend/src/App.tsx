@@ -8,15 +8,17 @@ import { MessageSquareText, Network } from "lucide-react";
 import { theme } from "./design/theme";
 import ConstellationPage from "./pages/ConstellationPage";
 import FramingPage from "./pages/FramingPage";
+import { useI18n } from "./i18n/useI18n";
 
 type Tab = "chat" | "constellation";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("chat");
+  const { language, setLanguage, t } = useI18n();
 
   const navItems: { id: Tab; icon: typeof MessageSquareText; label: string }[] = [
-    { id: "chat", icon: MessageSquareText, label: "Chat Conversation" },
-    { id: "constellation", icon: Network, label: "Knowledge Framing" },
+    { id: "chat", icon: MessageSquareText, label: t("nav.chat") },
+    { id: "constellation", icon: Network, label: t("nav.constellation") },
   ];
 
   return (
@@ -59,11 +61,28 @@ export default function App() {
             DRFraming{" "}
             <span className="text-blue-500">Bot</span>
           </h1>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {activeTab === "chat"
-              ? "Chat Conversation"
-              : "Knowledge Framing"}
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-full border border-slate-800/80 bg-slate-950/60 p-1">
+              {(["en", "zh"] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`rounded-full px-2 py-1 text-[10px] font-black tracking-widest transition-all ${
+                    language === lang
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {lang === "en" ? t("lang.en") : t("lang.zh")}
+                </button>
+              ))}
+            </div>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              {activeTab === "chat"
+                ? t("app.mode.chat")
+                : t("app.mode.constellation")}
+            </span>
+          </div>
         </header>
 
         {/* Page Content */}

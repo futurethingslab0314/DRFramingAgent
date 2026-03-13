@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { theme } from "../design/theme";
 import type { FramingRunResponse, ResearchContextInput } from "../types/framing";
 import { runFraming } from "../api/framing";
+import { useI18n } from "../i18n/useI18n";
 
 interface ChatPanelProps {
     onResult: (result: FramingRunResponse, owner?: string) => void;
@@ -18,53 +19,56 @@ const EMPTY_CONTEXT: ResearchContextInput = {
     method_or_constraints: "",
 };
 
-const FIELD_CONFIG: Array<{
+type FieldConfig = {
     key: keyof ResearchContextInput;
     label: string;
     placeholder: string;
     helper: string;
     rows: number;
     required: boolean;
-}> = [
-    {
-        key: "research_topic",
-        label: "Research Topic",
-        placeholder: "What phenomenon, issue, or design space are you working on?",
-        helper: "Name the topic, domain, or phenomenon you want to frame.",
-        rows: 3,
-        required: true,
-    },
-    {
-        key: "target_context",
-        label: "Target Context",
-        placeholder: "Who, where, or what setting is this research situated in?",
-        helper: "Describe the audience, setting, institution, or environment.",
-        rows: 3,
-        required: true,
-    },
-    {
-        key: "research_goal",
-        label: "Research Goal",
-        placeholder: "What do you want to understand, challenge, construct, or improve?",
-        helper: "State the main inquiry, ambition, or change you are aiming for.",
-        rows: 3,
-        required: true,
-    },
-    {
-        key: "method_or_constraints",
-        label: "Method / Constraints (Optional)",
-        placeholder: "Methods, artifacts, practical limits, or framing preferences",
-        helper: "Add preferred methods, material constraints, or anything the framing should respect.",
-        rows: 3,
-        required: false,
-    },
-];
+};
 
 export default function ChatPanel({ onResult }: ChatPanelProps) {
+    const { t } = useI18n();
     const [context, setContext] = useState<ResearchContextInput>(EMPTY_CONTEXT);
     const [owner, setOwner] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const fieldConfig: FieldConfig[] = [
+        {
+            key: "research_topic",
+            label: t("chat.field.research_topic.label"),
+            placeholder: t("chat.field.research_topic.placeholder"),
+            helper: t("chat.field.research_topic.helper"),
+            rows: 3,
+            required: true,
+        },
+        {
+            key: "target_context",
+            label: t("chat.field.target_context.label"),
+            placeholder: t("chat.field.target_context.placeholder"),
+            helper: t("chat.field.target_context.helper"),
+            rows: 3,
+            required: true,
+        },
+        {
+            key: "research_goal",
+            label: t("chat.field.research_goal.label"),
+            placeholder: t("chat.field.research_goal.placeholder"),
+            helper: t("chat.field.research_goal.helper"),
+            rows: 3,
+            required: true,
+        },
+        {
+            key: "method_or_constraints",
+            label: t("chat.field.method_or_constraints.label"),
+            placeholder: t("chat.field.method_or_constraints.placeholder"),
+            helper: t("chat.field.method_or_constraints.helper"),
+            rows: 3,
+            required: false,
+        },
+    ];
 
     const canSubmit = Boolean(
         context.research_topic.trim()
@@ -106,11 +110,11 @@ export default function ChatPanel({ onResult }: ChatPanelProps) {
     return (
         <div className={theme.components.glassCard}>
             <h3 className={`${theme.typography.subheading} mb-4`}>
-                Research Context
+                {t("chat.title")}
             </h3>
 
             <div className="space-y-4 mb-4">
-                {FIELD_CONFIG.map((field) => (
+                {fieldConfig.map((field) => (
                     <div key={field.key}>
                         <label
                             className={`${theme.typography.label} block mb-1`}
@@ -133,7 +137,7 @@ export default function ChatPanel({ onResult }: ChatPanelProps) {
                             style={{ color: theme.colors.text.dim }}
                         >
                             {field.helper}
-                            {field.required ? " Required." : ""}
+                            {field.required ? ` ${t("common.required")}` : ""}
                         </p>
                     </div>
                 ))}
@@ -142,7 +146,7 @@ export default function ChatPanel({ onResult }: ChatPanelProps) {
             <input
                 className={`${theme.components.input} w-full mb-3`}
                 type="text"
-                placeholder="Owner (optional)"
+                placeholder={t("chat.owner.placeholder")}
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
                 disabled={loading}
@@ -165,10 +169,10 @@ export default function ChatPanel({ onResult }: ChatPanelProps) {
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
                         <span className={theme.animation.spin}>⟳</span>
-                        Running pipeline…
+                        {t("chat.running")}
                     </span>
                 ) : (
-                    "Run Framing"
+                    t("chat.run")
                 )}
             </button>
         </div>

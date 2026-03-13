@@ -7,10 +7,12 @@ import { theme } from "../design/theme";
 import type { FramingRunResponse } from "../types/framing";
 import ChatPanel from "../components/ChatPanel";
 import FramingCard from "../components/FramingCard";
+import { useI18n } from "../i18n/useI18n";
 
 export default function FramingPage() {
     const [result, setResult] = useState<FramingRunResponse | null>(null);
     const [owner, setOwner] = useState<string | undefined>(undefined);
+    const { t } = useI18n();
 
     const handleResult = useCallback((res: FramingRunResponse, ownerValue?: string) => {
         setResult(res);
@@ -24,7 +26,7 @@ export default function FramingPage() {
                 className={`${theme.layout.headerHeight} flex items-center px-6 border-b ${theme.layout.glassBorder} ${theme.layout.panelBg} ${theme.layout.glassEffect}`}
             >
                 <h2 className={theme.typography.heading} style={{ fontSize: 18 }}>
-                    Framing Workspace
+                    {t("framing.header")}
                 </h2>
             </header>
 
@@ -49,18 +51,16 @@ export default function FramingPage() {
                                 className={theme.typography.body}
                                 style={{ color: theme.colors.text.muted }}
                             >
-                                Enter your research context and click{" "}
+                                {t("framing.empty.primary")}{" "}
                                 <strong style={{ color: theme.colors.text.normal }}>
-                                    Run Framing
+                                    {t("framing.empty.action")}
                                 </strong>{" "}
-                                to generate.
                             </p>
                             <p
                                 className={`${theme.typography.mono} mt-2`}
                                 style={{ color: theme.colors.text.muted }}
                             >
-                                The pipeline uses active keywords from the
-                                Constellation Map to shape your research framing.
+                                {t("framing.empty.secondary")}
                             </p>
                         </div>
                     )}

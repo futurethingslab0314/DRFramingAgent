@@ -10,6 +10,7 @@ import {
     type ZoteroPaper,
     type IngestResult,
 } from "../api/zotero";
+import { useI18n } from "../i18n/useI18n";
 
 type PaperStatus = "idle" | "processing" | "done" | "error";
 
@@ -25,6 +26,7 @@ interface ZoteroIngestProps {
 }
 
 export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
+    const { t } = useI18n();
     const [papers, setPapers] = useState<PaperEntry[]>([]);
     const [fetching, setFetching] = useState(false);
     const [batchRunning, setBatchRunning] = useState(false);
@@ -176,10 +178,10 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
     // ── Status badge ─────────────────────────────────────────
     const statusBadge = (status: PaperStatus) => {
         const map: Record<PaperStatus, { label: string; color: string }> = {
-            idle: { label: "Ready", color: "text-slate-400" },
-            processing: { label: "Analyzing…", color: "text-amber-400" },
-            done: { label: "✓ Done", color: "text-emerald-400" },
-            error: { label: "✗ Error", color: "text-red-400" },
+            idle: { label: t("zotero.status.ready"), color: "text-slate-400" },
+            processing: { label: t("zotero.status.processing"), color: "text-amber-400" },
+            done: { label: `✓ ${t("zotero.status.done")}`, color: "text-emerald-400" },
+            error: { label: `✗ ${t("zotero.status.error")}`, color: "text-red-400" },
         };
         const { label, color } = map[status];
         return <span className={`text-xs font-mono ${color}`}>{label}</span>;
@@ -200,7 +202,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                     className={theme.typography.subheading}
                     style={{ fontSize: 13 }}
                 >
-                    📚 Zotero Ingest
+                    📚 {t("zotero.title")}
                 </h3>
                 <button
                     onClick={handleFetch}
@@ -208,7 +210,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                     className={theme.components.buttonGhost}
                     style={{ fontSize: 12 }}
                 >
-                    {fetching ? "Fetching…" : "Fetch Papers"}
+                    {fetching ? t("zotero.fetching") : t("zotero.fetch")}
                 </button>
             </div>
 
@@ -231,7 +233,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                         className="accent-blue-500 w-3.5 h-3.5"
                                     />
                                     <span className="text-xs text-slate-400">
-                                        {allSelected ? "Deselect All" : "Select All"}
+                                        {allSelected ? t("zotero.deselect_all") : t("zotero.select_all")}
                                     </span>
                                 </label>
                             )}
@@ -239,7 +241,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                 className="text-xs"
                                 style={{ color: theme.colors.text.dim }}
                             >
-                                {papers.length} papers • {withAbstract.length} with abstract • {doneCount} ingested
+                                {papers.length} / {withAbstract.length} / {doneCount} {t("zotero.stats")}
                             </span>
                         </div>
                         {selectedCount > 0 && (
@@ -252,8 +254,8 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                     }`}
                             >
                                 {batchRunning
-                                    ? "Processing…"
-                                    : `Ingest Selected (${selectedCount})`}
+                                    ? t("zotero.processing")
+                                    : `${t("zotero.ingest_selected")} (${selectedCount})`}
                             </button>
                         )}
                     </div>
@@ -338,22 +340,24 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                                             }
                                             className="text-xs px-2 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 transition-colors"
                                         >
-                                            Analyze & Ingest
+                                            {t("zotero.ingest_one")}
                                         </button>
                                     )}
                                     {entry.status === "idle" && !hasAbstract && (
                                         <span className="text-xs text-slate-600 italic">
-                                            No abstract — cannot analyze
+                                            {t("zotero.no_abstract")}
                                         </span>
                                     )}
                                     {entry.status === "done" && entry.result && (
                                         <div className="text-xs text-emerald-400 font-mono space-y-0.5">
                                             <div>
-                                                +{entry.result.keywords_created} keywords added
+                                                +{entry.result.keywords_created} {t("zotero.keywords_added")}
                                             </div>
                                             <div className="text-slate-400">
-                                                raw {entry.result.keywords_raw} → refined {entry.result.keywords_refined}
-                                                {" "}({entry.result.keywords_dropped} dropped)
+                                                {t("zotero.refinement")}:
+                                                {" "}
+                                                {entry.result.keywords_raw} → {entry.result.keywords_refined}
+                                                {" "}({entry.result.keywords_dropped})
                                             </div>
                                         </div>
                                     )}
@@ -374,7 +378,7 @@ export default function ZoteroIngest({ onKeywordsAdded }: ZoteroIngestProps) {
                     className="text-xs text-center py-4"
                     style={{ color: theme.colors.text.dim }}
                 >
-                    Click "Fetch Papers" to load your Zotero library
+                    {t("zotero.empty")}
                 </p>
             )}
         </div>

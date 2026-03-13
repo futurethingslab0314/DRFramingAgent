@@ -1,70 +1,73 @@
 // ═══════════════════════════════════════════════════════════════
-// FramingCard — editable framing results + save + AI refine
+// FramingCard — editable bilingual framing results + save + refine
 // ═══════════════════════════════════════════════════════════════
 
 import { useState, useCallback, useEffect } from "react";
 import { theme } from "../design/theme";
-import type { FramingRunResponse } from "../types/framing";
-import { FRAMING_FIELDS, type FramingField } from "../types/framing";
+import type {
+    BilingualText,
+    FramingRunResponse,
+    FramingField,
+} from "../types/framing";
+import { FRAMING_FIELDS } from "../types/framing";
 import { saveFraming, refineFraming } from "../api/framing";
 import EpistemicSummary from "./EpistemicSummary";
+import { useI18n } from "../i18n/useI18n";
 
-// ─── Field labels ────────────────────────────────────────────
-
-const FIELD_LABELS: Record<FramingField, string> = {
-    title: "Title",
-    research_question: "Research Question",
-    background: "Background",
-    purpose: "Purpose",
-    method: "Method",
-    result: "Result",
-    contribution: "Contribution",
+const FIELD_LABEL_KEYS: Record<FramingField, string> = {
+    title: "field.title",
+    research_question: "field.research_question",
+    background: "field.background",
+    purpose: "field.purpose",
+    method: "field.method",
+    result: "field.result",
+    contribution: "field.contribution",
 };
-
-// ─── Props ───────────────────────────────────────────────────
 
 interface FramingCardProps {
     result: FramingRunResponse;
     owner?: string;
 }
 
-// ─── Component ───────────────────────────────────────────────
-
 export default function FramingCard({ result, owner }: FramingCardProps) {
+    const { t } = useI18n();
     const [edited, setEdited] = useState<FramingRunResponse>({ ...result });
     const [saving, setSaving] = useState(false);
     const [refining, setRefining] = useState(false);
     const [saveResult, setSaveResult] = useState<string | null>(null);
     const [dirty, setDirty] = useState(false);
 
-    // Reset when new result arrives
     useEffect(() => {
         setEdited({ ...result });
         setDirty(false);
         setSaveResult(null);
     }, [result]);
 
-    // Field change handler
-    const handleFieldChange = useCallback(
-        (field: string, value: string) => {
-            setEdited((prev) => ({ ...prev, [field]: value }));
+    const handleBilingualFieldChange = useCallback(
+        (field: FramingField | "abstract", language: keyof BilingualText, value: string) => {
+            setEdited((prev) => ({
+                ...prev,
+                [field]: {
+                    ...prev[field],
+                    [language]: value,
+                },
+            }));
             setDirty(true);
             setSaveResult(null);
         },
         [],
     );
 
-    // Save to Notion DB1
     const handleSave = useCallback(async () => {
         setSaving(true);
         setSaveResult(null);
         try {
             const res = await saveFraming(
                 edited,
-                edited.title || edited.research_question,
+                edited.title.en || edited.research_question.en,
                 owner,
             );
-            setSaveResult(`✓ Saved → Notion DB1 (${res.notion_page_id.slice(0, 8)}…)`);
+            setSaveResult(`${t("card.saved")} (${res.notion_page_id.slice(0, 8)}…)`);
             setDirty(false);
         } catch (err) {
             setSaveResult(
@@ -73,52 +76,36 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
         } finally {
             setSaving(false);
         }
-    }, [edited, owner]);
+    }, [edited, owner, t]);
 
-    // AI Refine
     const handleRefine = useCallback(async () => {
         setRefining(true);
         setSaveResult(null);
         try {
-            const refined = await refineFraming({
-                research_question: edited.research_question,
-                background: edited.background,
-                purpose: edited.purpose,
-                method: edited.method,
-                result: edited.result,
-                contribution: edited.contribution,
-                abstract_en: edited.abstract_en,
-                abstract_zh: edited.abstract_zh,
-            });
-            setEdited((prev) => ({
-                ...prev,
-                ...refined,
-            }));
+            const refined = await refineFraming(edited);
+            setEdited(refined);
             setDirty(true);
-            setSaveResult("✓ AI refinement applied — review and save when ready");
+            setSaveResult(t("card.refine.applied"));
         } catch (err) {
             setSaveResult(
-                `✗ Refine failed: ${err instanceof Error ? err.message : "unknown error"}`,
+                `✗ ${err instanceof Error ? err.message : "unknown error"}`,
             );
         } finally {
             setRefining(false);
         }
-    }, [edited]);
+    }, [edited, t]);
 
-    // Reset to original
     const handleReset = useCallback(() => {
         setEdited({ ...result });
         setDirty(false);
         setSaveResult(null);
     }, [result]);
 
-    // Shared textarea style
     const textareaClass =
         "w-full bg-slate-900/60 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 resize-y transition-colors";
 
     return (
         <div className="flex flex-col">
-            {/* ── Sticky Action Bar ─────────────────────────── */}
             <div
                 className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 mb-4 rounded-xl border"
                 style={{
@@ -137,7 +124,7 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
                     onClick={handleSave}
                     disabled={saving || refining}
                 >
-                    {saving ? "⏳ Uploading…" : "📤 Upload to Notion DB1"}
+                    {saving ? t("card.saving") : t("card.save")}
                 </button>
 
                 <button
@@ -150,7 +137,7 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
                     onClick={handleRefine}
                     disabled={saving || refining}
                 >
-                    {refining ? "⏳ Refining…" : "✨ AI Refine"}
+                    {refining ? t("card.refining") : t("card.refine")}
                 </button>
 
                 {dirty && (
@@ -163,7 +150,7 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
                         onClick={handleReset}
                         disabled={saving || refining}
                     >
-                        ↩ Reset
+                        {t("card.reset")}
                     </button>
                 )}
 
@@ -183,72 +170,85 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
                 )}
             </div>
 
-            {/* ── Scrollable Content ────────────────────────── */}
             <div className="space-y-4 pb-24 pr-1">
-                {/* Profile charts */}
                 <EpistemicSummary
                     epistemicProfile={result.epistemic_profile}
                     artifactProfile={result.artifact_profile}
                 />
 
-                {/* 6 core editable fields */}
                 <div className="space-y-3">
                     {FRAMING_FIELDS.map((field) => (
                         <div key={field} className={theme.components.innerCard}>
                             <label
-                                className={`${theme.typography.label} block mb-1`}
+                                className={`${theme.typography.label} block mb-3`}
                                 style={{ color: theme.colors.accent }}
                             >
-                                {FIELD_LABELS[field]}
+                                {t(FIELD_LABEL_KEYS[field] as never)}
                             </label>
-                            <textarea
-                                value={edited[field]}
-                                onChange={(e) =>
-                                    handleFieldChange(field, e.target.value)
-                                }
-                                rows={field === "research_question" || field === "title" ? 2 : 3}
-                                className={textareaClass}
-                                style={{ fontFamily: "inherit", lineHeight: 1.6 }}
-                            />
+                            <div className="grid grid-cols-2 gap-3">
+                                {(["en", "zh"] as const).map((language) => (
+                                    <div key={language}>
+                                        <div
+                                            className={`${theme.typography.mono} mb-1`}
+                                            style={{ color: theme.colors.text.dim }}
+                                        >
+                                            {language === "en"
+                                                ? t("field.english")
+                                                : t("field.chinese")}
+                                        </div>
+                                        <textarea
+                                            value={edited[field][language]}
+                                            onChange={(e) =>
+                                                handleBilingualFieldChange(
+                                                    field,
+                                                    language,
+                                                    e.target.value,
+                                                )
+                                            }
+                                            rows={field === "research_question" || field === "title" ? 2 : 3}
+                                            className={textareaClass}
+                                            style={{ fontFamily: "inherit", lineHeight: 1.6 }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Abstracts — also editable */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className={theme.components.innerCard}>
-                        <label
-                            className={`${theme.typography.label} block mb-1`}
-                            style={{ color: theme.colors.text.dim }}
-                        >
-                            Abstract (EN)
-                        </label>
-                        <textarea
-                            value={edited.abstract_en}
-                            onChange={(e) =>
-                                handleFieldChange("abstract_en", e.target.value)
-                            }
-                            rows={5}
-                            className={textareaClass}
-                            style={{ fontFamily: "inherit", lineHeight: 1.6 }}
-                        />
-                    </div>
-                    <div className={theme.components.innerCard}>
-                        <label
-                            className={`${theme.typography.label} block mb-1`}
-                            style={{ color: theme.colors.text.dim }}
-                        >
-                            摘要 (ZH)
-                        </label>
-                        <textarea
-                            value={edited.abstract_zh}
-                            onChange={(e) =>
-                                handleFieldChange("abstract_zh", e.target.value)
-                            }
-                            rows={5}
-                            className={textareaClass}
-                            style={{ fontFamily: "inherit", lineHeight: 1.6 }}
-                        />
+                <div className={theme.components.innerCard}>
+                    <label
+                        className={`${theme.typography.label} block mb-3`}
+                        style={{ color: theme.colors.text.dim }}
+                    >
+                        {t("field.abstract")}
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                        {(["en", "zh"] as const).map((language) => (
+                            <div key={language}>
+                                <div
+                                    className={`${theme.typography.mono} mb-1`}
+                                    style={{ color: theme.colors.text.dim }}
+                                >
+                                    {language === "en"
+                                        ? t("field.english")
+                                        : t("field.chinese")}
+                                </div>
+                                <textarea
+                                    value={edited.abstract[language]}
+                                    onChange={(e) =>
+                                        handleBilingualFieldChange(
+                                            "abstract",
+                                            language,
+                                            e.target.value,
+                                        )
+                                    }
+                                    rows={5}
+                                    className={textareaClass}
+                                    style={{ fontFamily: "inherit", lineHeight: 1.6 }}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

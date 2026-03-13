@@ -4,6 +4,11 @@
 
 import type { EpistemicProfile, ArtifactProfile } from "./keyword";
 
+export interface BilingualText {
+    en: string;
+    zh: string;
+}
+
 export interface ResearchContextInput {
     research_topic: string;
     target_context: string;
@@ -17,15 +22,14 @@ export interface FramingRunRequest {
 }
 
 export interface FramingRunResponse {
-    title: string;
-    research_question: string;
-    background: string;
-    purpose: string;
-    method: string;
-    result: string;
-    contribution: string;
-    abstract_en: string;
-    abstract_zh: string;
+    title: BilingualText;
+    research_question: BilingualText;
+    background: BilingualText;
+    purpose: BilingualText;
+    method: BilingualText;
+    result: BilingualText;
+    contribution: BilingualText;
+    abstract: BilingualText;
     epistemic_profile: EpistemicProfile;
     artifact_profile: ArtifactProfile;
 }
@@ -53,3 +57,8 @@ export const FRAMING_FIELDS = [
 ] as const;
 
 export type FramingField = (typeof FRAMING_FIELDS)[number];
+
+export type EditableFramingPayload = Omit<
+    FramingRunResponse,
+    "epistemic_profile" | "artifact_profile"
+>;

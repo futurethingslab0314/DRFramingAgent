@@ -9,6 +9,7 @@ import type {
     Orientation,
     ArtifactRole,
     PipelineRole,
+    BilingualText,
 } from "../schema/framingConstellationBot.js";
 
 // ─── Notion client singleton ─────────────────────────────────
@@ -57,11 +58,17 @@ const DB1 = {
     TITLE: "Title",
     OWNER: "Owner",
     RESEARCH_QUESTION: "Research Question",
+    RESEARCH_QUESTION_ZH: "Research Question ZH",
     BACKGROUND: "Background",
+    BACKGROUND_ZH: "Background ZH",
     PURPOSE: "Purpose",
+    PURPOSE_ZH: "Purpose ZH",
     METHOD: "Method",
+    METHOD_ZH: "Method ZH",
     RESULT: "Result",
+    RESULT_ZH: "Result ZH",
     CONTRIBUTION: "Contribution",
+    CONTRIBUTION_ZH: "Contribution ZH",
     ABSTRACT_EN: "Abstract EN",
     ABSTRACT_ZH: "Abstract ZH",
 } as const;
@@ -273,14 +280,14 @@ export async function updateKeywordInDB2(
 // ─── DB1: Framing Results ────────────────────────────────────
 
 export interface FramingResult {
-    research_question: string;
-    background: string;
-    purpose: string;
-    method: string;
-    result: string;
-    contribution: string;
-    abstract_en: string;
-    abstract_zh: string;
+    title: BilingualText;
+    research_question: BilingualText;
+    background: BilingualText;
+    purpose: BilingualText;
+    method: BilingualText;
+    result: BilingualText;
+    contribution: BilingualText;
+    abstract: BilingualText;
 }
 
 /**
@@ -295,7 +302,7 @@ export async function writeFramingToDB1(
         parent: { database_id: db1Id() },
         properties: {
             [DB1.TITLE]: {
-                title: [{ text: { content: title ?? framing.research_question.slice(0, 80) } }],
+                title: [{ text: { content: title ?? framing.title.en.slice(0, 80) } }],
             },
             ...(owner
                 ? {
@@ -305,28 +312,46 @@ export async function writeFramingToDB1(
                 }
                 : {}),
             [DB1.RESEARCH_QUESTION]: {
-                rich_text: [{ text: { content: framing.research_question } }],
+                rich_text: [{ text: { content: framing.research_question.en } }],
+            },
+            [DB1.RESEARCH_QUESTION_ZH]: {
+                rich_text: [{ text: { content: framing.research_question.zh } }],
             },
             [DB1.BACKGROUND]: {
-                rich_text: [{ text: { content: framing.background } }],
+                rich_text: [{ text: { content: framing.background.en } }],
+            },
+            [DB1.BACKGROUND_ZH]: {
+                rich_text: [{ text: { content: framing.background.zh } }],
             },
             [DB1.PURPOSE]: {
-                rich_text: [{ text: { content: framing.purpose } }],
+                rich_text: [{ text: { content: framing.purpose.en } }],
+            },
+            [DB1.PURPOSE_ZH]: {
+                rich_text: [{ text: { content: framing.purpose.zh } }],
             },
             [DB1.METHOD]: {
-                rich_text: [{ text: { content: framing.method } }],
+                rich_text: [{ text: { content: framing.method.en } }],
+            },
+            [DB1.METHOD_ZH]: {
+                rich_text: [{ text: { content: framing.method.zh } }],
             },
             [DB1.RESULT]: {
-                rich_text: [{ text: { content: framing.result } }],
+                rich_text: [{ text: { content: framing.result.en } }],
+            },
+            [DB1.RESULT_ZH]: {
+                rich_text: [{ text: { content: framing.result.zh } }],
             },
             [DB1.CONTRIBUTION]: {
-                rich_text: [{ text: { content: framing.contribution } }],
+                rich_text: [{ text: { content: framing.contribution.en } }],
+            },
+            [DB1.CONTRIBUTION_ZH]: {
+                rich_text: [{ text: { content: framing.contribution.zh } }],
             },
             [DB1.ABSTRACT_EN]: {
-                rich_text: [{ text: { content: framing.abstract_en } }],
+                rich_text: [{ text: { content: framing.abstract.en } }],
             },
             [DB1.ABSTRACT_ZH]: {
-                rich_text: [{ text: { content: framing.abstract_zh } }],
+                rich_text: [{ text: { content: framing.abstract.zh } }],
             },
         },
     });

@@ -18,15 +18,14 @@ export interface PipelineInput {
 }
 
 export interface PipelineOutput {
-    title: string;
-    research_question: string;
-    background: string;
-    purpose: string;
-    method: string;
-    result: string;
-    contribution: string;
-    abstract_en: string;
-    abstract_zh: string;
+    title: { en: string; zh: string };
+    research_question: { en: string; zh: string };
+    background: { en: string; zh: string };
+    purpose: { en: string; zh: string };
+    method: { en: string; zh: string };
+    result: { en: string; zh: string };
+    contribution: { en: string; zh: string };
+    abstract: { en: string; zh: string };
 }
 
 // ─── Pipeline runner ─────────────────────────────────────────
@@ -91,24 +90,27 @@ export async function runConstellationFramingPipeline(
             method: framingResult.method,
             result: framingResult.result,
             contribution: framingResult.contribution,
-            abstract_en: abstractResult.abstract_en,
-            abstract_zh: abstractResult.abstract_zh,
+            abstract_en: abstractResult.en,
+            abstract_zh: abstractResult.zh,
             keyword_map_by_orientation: syncResult.keyword_map_by_orientation,
             epistemic_profile: syncResult.epistemic_profile,
         },
         callLLM,
     );
 
+    const localizedResult = {
+        title: { en: titleResult.title_en, zh: "" },
+        research_question: { en: framingResult.research_question, zh: "" },
+        background: { en: framingResult.background, zh: "" },
+        purpose: { en: framingResult.purpose, zh: "" },
+        method: { en: framingResult.method, zh: "" },
+        result: { en: framingResult.result, zh: "" },
+        contribution: { en: framingResult.contribution, zh: "" },
+        abstract: abstractResult,
+    };
+
     // ── Combine & return ──────────────────────────────────────
     return {
-        title: titleResult.title,
-        research_question: framingResult.research_question,
-        background: framingResult.background,
-        purpose: framingResult.purpose,
-        method: framingResult.method,
-        result: framingResult.result,
-        contribution: framingResult.contribution,
-        abstract_en: abstractResult.abstract_en,
-        abstract_zh: abstractResult.abstract_zh,
+        ...localizedResult,
     };
 }
