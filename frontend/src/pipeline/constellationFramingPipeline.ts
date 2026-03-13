@@ -26,6 +26,16 @@ export interface PipelineOutput {
     result: { en: string; zh: string };
     contribution: { en: string; zh: string };
     abstract: { en: string; zh: string };
+    interpretation_summary: {
+        topic_summary: string;
+        context_summary: string;
+        goal_summary: string;
+        method_constraints_summary?: string;
+        inferred_research_direction: string;
+        inferred_contribution_mode: string;
+        possible_risks: string[];
+        steering_keywords: string[];
+    };
 }
 
 // ─── Pipeline runner ─────────────────────────────────────────
@@ -107,6 +117,15 @@ export async function runConstellationFramingPipeline(
         result: { en: framingResult.result, zh: "" },
         contribution: { en: framingResult.contribution, zh: "" },
         abstract: abstractResult,
+        interpretation_summary: {
+            topic_summary: "",
+            context_summary: "",
+            goal_summary: "",
+            inferred_research_direction: "",
+            inferred_contribution_mode: "",
+            possible_risks: [],
+            steering_keywords: [],
+        },
     };
 
     // ── Combine & return ──────────────────────────────────────

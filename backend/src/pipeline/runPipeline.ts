@@ -10,6 +10,7 @@ import { constellationRuleEngine } from "../skills/constellationRuleEngine.js";
 import { framingGeneratorMVP } from "../skills/framingGeneratorMVP.js";
 import { constellationAbstractGenerator } from "../skills/constellationAbstractGenerator.js";
 import { bilingualFramingLocalizer } from "../skills/bilingualFramingLocalizer.js";
+import { interpretContext } from "../skills/interpretContext.js";
 import { paperEpistemicProfiler } from "../skills/paperEpistemicProfiler.js";
 import { titleGenerator } from "../skills/titleGenerator.js";
 
@@ -20,7 +21,9 @@ import type {
     EpistemicProfile,
     ArtifactProfile,
     BilingualText,
+    InterpretationSummary,
 } from "../schema/framingConstellationBot.js";
+import type { StructuredResearchContext } from "../utils/researchContext.js";
 
 // ─── Pipeline output type ────────────────────────────────────
 
@@ -35,6 +38,7 @@ export interface PipelineResult {
     abstract: BilingualText;
     epistemic_profile: EpistemicProfile;
     artifact_profile: ArtifactProfile;
+    interpretation_summary: InterpretationSummary;
 }
 
 // ─── Full constellation framing pipeline ─────────────────────
@@ -46,6 +50,7 @@ export interface PipelineResult {
  */
 export async function runPipeline(
     keywords: KeywordInput[],
+    structuredContext: StructuredResearchContext,
     researchContext: string,
 ): Promise<PipelineResult> {
     // Step 1: ConstellationKeywordSync (deterministic)
@@ -67,10 +72,23 @@ export async function runPipeline(
         framing_bias: influencerResult.framing_bias,
     });
 
+    const interpretationSummary = await interpretContext(
+        {
+            context: structuredContext,
+            epistemic_profile: syncResult.epistemic_profile,
+            artifact_profile: syncResult.artifact_profile,
+            keyword_map_by_orientation: syncResult.keyword_map_by_orientation,
+            keyword_index: syncResult.keyword_index,
+            reasoning_control: ruleResult.reasoning_control,
+        },
+        callLLM,
+    );
+
     // Step 4: FramingGeneratorMVP (LLM)
     const framingResult = await framingGeneratorMVP(
         {
-            research_context: researchContext,
+            interpreted_context: interpretationSummary,
+            raw_context: researchContext,
             rule_engine_output: ruleResult.reasoning_control,
         },
         callLLM,
@@ -150,6 +168,7 @@ export async function runPipeline(
         abstract: abstractResult,
         epistemic_profile: syncResult.epistemic_profile,
         artifact_profile: syncResult.artifact_profile,
+        interpretation_summary: interpretationSummary,
     };
 }
 

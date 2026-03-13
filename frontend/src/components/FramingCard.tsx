@@ -13,6 +13,7 @@ import { FRAMING_FIELDS } from "../types/framing";
 import { saveFraming, refineFraming } from "../api/framing";
 import EpistemicSummary from "./EpistemicSummary";
 import { useI18n } from "../i18n/useI18n";
+import FramingInterpretationSummary from "./FramingInterpretationSummary";
 
 const FIELD_LABEL_KEYS: Record<FramingField, string> = {
     title: "field.title",
@@ -171,6 +172,12 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
             </div>
 
             <div className="space-y-4 pb-24 pr-1">
+                <FramingInterpretationSummary
+                    interpretationSummary={result.interpretation_summary}
+                    epistemicProfile={result.epistemic_profile}
+                    artifactProfile={result.artifact_profile}
+                />
+
                 <EpistemicSummary
                     epistemicProfile={result.epistemic_profile}
                     artifactProfile={result.artifact_profile}

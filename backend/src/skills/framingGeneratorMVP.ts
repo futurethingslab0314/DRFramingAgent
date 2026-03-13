@@ -4,12 +4,14 @@
 
 import type {
     ReasoningControl,
+    InterpretationSummary,
 } from "../schema/framingConstellationBot.js";
 
 // ─── Input / Output types ────────────────────────────────────
 
 export interface FramingGeneratorInput {
-    research_context: string;
+    interpreted_context: InterpretationSummary;
+    raw_context: string;
     rule_engine_output: ReasoningControl;
 }
 
@@ -63,10 +65,34 @@ export function buildSystemPrompt(
     ].join("\n");
 }
 
-export function buildUserPrompt(userContext: string): string {
+export function buildUserPrompt(
+    interpretedContext: InterpretationSummary,
+    rawContext: string,
+): string {
     return [
-        "── Design / research context ──",
-        userContext,
+        "── Interpreted research topic ──",
+        interpretedContext.topic_summary,
+        "",
+        "── Interpreted context ──",
+        interpretedContext.context_summary,
+        "",
+        "── Interpreted goal ──",
+        interpretedContext.goal_summary,
+        "",
+        "── Method or constraints ──",
+        interpretedContext.method_constraints_summary ?? "None provided",
+        "",
+        "── Inferred framing direction ──",
+        interpretedContext.inferred_research_direction,
+        "",
+        "── Inferred contribution mode ──",
+        interpretedContext.inferred_contribution_mode,
+        "",
+        "── Steering keywords ──",
+        interpretedContext.steering_keywords.join(", "),
+        "",
+        "── Raw research context ──",
+        rawContext,
         "",
         "Generate the six framing fields as JSON.",
     ].join("\n");
@@ -85,7 +111,7 @@ export async function framingGeneratorMVP(
     callLLM: (system: string, user: string) => Promise<string>,
 ): Promise<FramingGeneratorOutput> {
     const system = buildSystemPrompt(input.rule_engine_output);
-    const user = buildUserPrompt(input.research_context);
+    const user = buildUserPrompt(input.interpreted_context, input.raw_context);
 
     const raw = await callLLM(system, user);
 

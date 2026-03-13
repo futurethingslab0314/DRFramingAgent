@@ -9,6 +9,17 @@ export interface BilingualText {
     zh: string;
 }
 
+export interface InterpretationSummary {
+    topic_summary: string;
+    context_summary: string;
+    goal_summary: string;
+    method_constraints_summary?: string;
+    inferred_research_direction: string;
+    inferred_contribution_mode: string;
+    possible_risks: string[];
+    steering_keywords: string[];
+}
+
 export interface ResearchContextInput {
     research_topic: string;
     target_context: string;
@@ -32,6 +43,7 @@ export interface FramingRunResponse {
     abstract: BilingualText;
     epistemic_profile: EpistemicProfile;
     artifact_profile: ArtifactProfile;
+    interpretation_summary: InterpretationSummary;
 }
 
 export interface FramingSaveRequest {

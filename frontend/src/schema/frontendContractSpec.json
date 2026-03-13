@@ -33,6 +33,16 @@
             "research_goal": "string",
             "method_or_constraints?": "string"
         },
+        "InterpretationSummary": {
+            "topic_summary": "string",
+            "context_summary": "string",
+            "goal_summary": "string",
+            "method_constraints_summary?": "string",
+            "inferred_research_direction": "string",
+            "inferred_contribution_mode": "string",
+            "possible_risks": "string[]",
+            "steering_keywords": "string[]"
+        },
         "FramingRunRequest": {
             "context": "ResearchContextInput",
             "owner?": "string"
@@ -47,7 +57,8 @@
             "contribution": { "en": "string", "zh": "string" },
             "abstract": { "en": "string", "zh": "string" },
             "epistemic_profile": "EpistemicProfile",
-            "artifact_profile": "ArtifactProfile"
+            "artifact_profile": "ArtifactProfile",
+            "interpretation_summary": "InterpretationSummary"
         }
     },
     "api_endpoints": {

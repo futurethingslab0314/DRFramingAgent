@@ -67,8 +67,9 @@ const router = Router();
 router.post("/run", async (req, res) => {
     try {
         let userContext: string;
+        let parsedContext;
         try {
-            const parsedContext = parseStructuredResearchContext(req.body);
+            parsedContext = parseStructuredResearchContext(req.body);
             userContext = composeResearchContext(parsedContext);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Invalid research context";
@@ -86,7 +87,7 @@ router.post("/run", async (req, res) => {
         }
 
         // Run the 5-step pipeline
-        const result = await runPipeline(activeKeywords, userContext);
+        const result = await runPipeline(activeKeywords, parsedContext, userContext);
 
         res.json(result);
     } catch (err) {
@@ -143,6 +144,7 @@ router.post("/refine", async (req, res) => {
             contribution,
             epistemic_profile,
             artifact_profile,
+            interpretation_summary,
         } = req.body;
 
         if (!research_question?.en) {
@@ -246,6 +248,7 @@ Return a JSON object with exactly these fields:
             abstract,
             epistemic_profile,
             artifact_profile,
+            interpretation_summary,
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";

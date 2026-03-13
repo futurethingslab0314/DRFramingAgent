@@ -104,6 +104,17 @@ export interface BilingualText {
     zh: string;
 }
 
+export interface InterpretationSummary {
+    topic_summary: string;
+    context_summary: string;
+    goal_summary: string;
+    method_constraints_summary?: string;
+    inferred_research_direction: string;
+    inferred_contribution_mode: string;
+    possible_risks: string[];
+    steering_keywords: string[];
+}
+
 export interface FramingOutput {
     title: BilingualText;
     /** 1-2 sentences */
@@ -118,6 +129,7 @@ export interface FramingOutput {
     contribution: BilingualText;
     research_question: BilingualText;
     abstract: BilingualText;
+    interpretation_summary: InterpretationSummary;
 }
 
 // ─── Shared State ─────────────────────────────────────────────

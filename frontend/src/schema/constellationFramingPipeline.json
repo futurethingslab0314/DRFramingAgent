@@ -126,6 +126,16 @@
         "method": { "en": "$.state.method_en", "zh": "$.state.method_zh" },
         "result": { "en": "$.state.result_en", "zh": "$.state.result_zh" },
         "contribution": { "en": "$.state.contribution_en", "zh": "$.state.contribution_zh" },
-        "abstract": { "en": "$.state.abstract_en", "zh": "$.state.abstract_zh" }
+        "abstract": { "en": "$.state.abstract_en", "zh": "$.state.abstract_zh" },
+        "interpretation_summary": {
+            "topic_summary": "$.state.interpretation_topic_summary",
+            "context_summary": "$.state.interpretation_context_summary",
+            "goal_summary": "$.state.interpretation_goal_summary",
+            "method_constraints_summary": "$.state.interpretation_method_constraints_summary",
+            "inferred_research_direction": "$.state.interpretation_research_direction",
+            "inferred_contribution_mode": "$.state.interpretation_contribution_mode",
+            "possible_risks": "$.state.interpretation_possible_risks",
+            "steering_keywords": "$.state.interpretation_steering_keywords"
+        }
     }
 }
