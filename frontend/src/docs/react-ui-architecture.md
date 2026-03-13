@@ -7,7 +7,7 @@
 | Route | Purpose |
 |---|---|
 | `/constellation` | **Keyword constellation map** — React Flow canvas showing keywords as nodes positioned around four orientation centers. Users inspect, edit, toggle, and re-weight keywords here. |
-| `/framing` | **Framing workspace** — input `user_context`, trigger the pipeline, preview the 8-field framing result (RQ, background, purpose, method, result, contribution, abstract_en, abstract_zh), then save to Notion DB1. |
+| `/framing` | **Framing workspace** — input a structured research context, trigger the pipeline, preview the 8-field framing result (RQ, background, purpose, method, result, contribution, abstract_en, abstract_zh), then save to Notion DB1. |
 
 ---
 
@@ -53,7 +53,7 @@
 <App>
   <NavBar />
   <FramingPage>
-    <ContextInput>                    ← textarea for user_context
+    <ContextInput>                    ← four-field research context form
       <OwnerField />                  ← optional owner string
       <RunButton />                   ← POST /api/framing/run
     </ContextInput>
@@ -98,7 +98,7 @@
 | Component | Local State |
 |---|---|
 | `InspectorPanel` | `draftEdits: Partial<Keyword>` — buffered edits before PATCH |
-| `ContextInput` | `userContext: string`, `owner: string` |
+| `ContextInput` | `context: ResearchContextInput`, `owner: string` |
 | `FilterBar` | `activeFilters: { orientation?, artifact_role?, activeOnly? }` |
 | `FramingFields` | `editedFields: Partial<FramingResult>` — local overrides before save |
 

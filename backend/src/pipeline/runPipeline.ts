@@ -45,7 +45,7 @@ export interface PipelineResult {
  */
 export async function runPipeline(
     keywords: KeywordInput[],
-    userContext: string,
+    researchContext: string,
 ): Promise<PipelineResult> {
     // Step 1: ConstellationKeywordSync (deterministic)
     const syncResult = constellationKeywordSync(keywords);
@@ -69,7 +69,7 @@ export async function runPipeline(
     // Step 4: FramingGeneratorMVP (LLM)
     const framingResult = await framingGeneratorMVP(
         {
-            user_context: userContext,
+            research_context: researchContext,
             rule_engine_output: ruleResult.reasoning_control,
         },
         callLLM,

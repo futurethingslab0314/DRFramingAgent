@@ -16,9 +16,9 @@
                 "notes?": "string"
             }
         },
-        "user_context": {
+        "research_context": {
             "type": "string",
-            "description": "User's design / project description or research intention"
+            "description": "Structured and composed research-context text used by the framing generator"
         }
     },
     "steps": [
@@ -69,7 +69,7 @@
             "skill": "FramingGeneratorMVP",
             "type": "llm",
             "input": {
-                "user_context": "$.inputs.user_context",
+                "research_context": "$.inputs.research_context",
                 "rule_engine_output": "$.state.reasoning_control"
             },
             "output": {

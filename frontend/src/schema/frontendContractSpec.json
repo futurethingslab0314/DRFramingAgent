@@ -27,8 +27,14 @@
             "solution_system": "number",
             "epistemic_mediator": "number"
         },
+        "ResearchContextInput": {
+            "research_topic": "string",
+            "target_context": "string",
+            "research_goal": "string",
+            "method_or_constraints?": "string"
+        },
         "FramingRunRequest": {
-            "user_context": "string",
+            "context": "ResearchContextInput",
             "owner?": "string"
         },
         "FramingRunResponse": {

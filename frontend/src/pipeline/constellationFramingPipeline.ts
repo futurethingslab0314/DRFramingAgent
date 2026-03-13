@@ -14,7 +14,7 @@ import { titleGenerator } from "../../.agent/skills/TitleGenerator/titleGenerato
 
 export interface PipelineInput {
     keywords: KeywordInput[];
-    user_context: string;
+    research_context: string;
 }
 
 export interface PipelineOutput {
@@ -34,7 +34,7 @@ export interface PipelineOutput {
 /**
  * Runs the full FramingConstellationBot pipeline.
  *
- * @param input        Pipeline inputs (keywords + user_context)
+ * @param input        Pipeline inputs (keywords + research_context)
  * @param callLLM      Injected LLM caller for the two generative steps
  * @returns            All eight framing output fields
  */
@@ -64,7 +64,7 @@ export async function runConstellationFramingPipeline(
     // ── Step 4: FramingGeneratorMVP (LLM) ─────────────────────
     const framingResult = await framingGeneratorMVP(
         {
-            user_context: input.user_context,
+            research_context: input.research_context,
             rule_engine_output: ruleResult.reasoning_control,
         },
         callLLM,

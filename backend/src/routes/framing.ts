@@ -5,6 +5,10 @@ import {
     writeFramingToDB1,
 } from "../services/notionService.js";
 import { callLLM } from "../services/llmService.js";
+import {
+    composeResearchContext,
+    parseStructuredResearchContext,
+} from "../utils/researchContext.js";
 
 const router = Router();
 
@@ -13,14 +17,19 @@ const router = Router();
  * Run the full ConstellationFramingPipeline.
  * Auto-fetches active keywords from DB2, runs the 6-step pipeline.
  *
- * Body: { user_context: string, owner?: string }
+ * Body:
+ *   New: { context: { research_topic, target_context, research_goal, method_or_constraints? }, owner?: string }
+ *   Legacy: { user_context: string, owner?: string }
  */
 router.post("/run", async (req, res) => {
     try {
-        const { user_context } = req.body;
-
-        if (!user_context || typeof user_context !== "string") {
-            res.status(400).json({ error: "user_context string is required" });
+        let userContext: string;
+        try {
+            const parsedContext = parseStructuredResearchContext(req.body);
+            userContext = composeResearchContext(parsedContext);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Invalid research context";
+            res.status(400).json({ error: message });
             return;
         }
 
@@ -34,7 +43,7 @@ router.post("/run", async (req, res) => {
         }
 
         // Run the 5-step pipeline
-        const result = await runPipeline(activeKeywords, user_context);
+        const result = await runPipeline(activeKeywords, userContext);
 
         res.json(result);
     } catch (err) {

@@ -9,7 +9,7 @@ import type {
 // ─── Input / Output types ────────────────────────────────────
 
 export interface FramingGeneratorInput {
-    user_context: string;
+    research_context: string;
     rule_engine_output: ReasoningControl;
 }
 
@@ -85,7 +85,7 @@ export async function framingGeneratorMVP(
     callLLM: (system: string, user: string) => Promise<string>,
 ): Promise<FramingGeneratorOutput> {
     const system = buildSystemPrompt(input.rule_engine_output);
-    const user = buildUserPrompt(input.user_context);
+    const user = buildUserPrompt(input.research_context);
 
     const raw = await callLLM(system, user);
 

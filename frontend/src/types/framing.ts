@@ -4,8 +4,15 @@
 
 import type { EpistemicProfile, ArtifactProfile } from "./keyword";
 
+export interface ResearchContextInput {
+    research_topic: string;
+    target_context: string;
+    research_goal: string;
+    method_or_constraints?: string;
+}
+
 export interface FramingRunRequest {
-    user_context: string;
+    context: ResearchContextInput;
     owner?: string;
 }
 
