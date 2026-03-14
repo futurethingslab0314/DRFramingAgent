@@ -9,7 +9,12 @@ import { constellationAbstractGenerator } from "../skills/constellationAbstractG
 import { titleGenerator } from "../skills/titleGenerator.js";
 import { bilingualFramingLocalizer } from "../skills/bilingualFramingLocalizer.js";
 import {
+    generateFramingDirections,
+    generateGuidedExpansion,
+} from "../skills/guidedExpansionGenerator.js";
+import {
     composeResearchContext,
+    parseIdeaSeedRequest,
     parseStructuredResearchContext,
 } from "../utils/researchContext.js";
 import type { FramingResult } from "../services/notionService.js";
@@ -54,6 +59,59 @@ function buildTitleContext(activeKeywords: Awaited<ReturnType<typeof fetchKeywor
 }
 
 const router = Router();
+
+router.post("/expand", async (req, res) => {
+    try {
+        const ideaSeed = parseIdeaSeedRequest(req.body);
+        const allKeywords = await fetchKeywordsFromDB2();
+        const activeKeywords = allKeywords.filter((kw) => kw.active);
+
+        if (activeKeywords.length === 0) {
+            res.status(400).json({ error: "No active keywords in DB2. Add or activate keywords first." });
+            return;
+        }
+
+        const expansion = generateGuidedExpansion(activeKeywords, ideaSeed);
+
+        res.json({
+            idea_seed: ideaSeed,
+            ...expansion,
+        });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        res.status(400).json({ error: message });
+    }
+});
+
+router.post("/directions", async (req, res) => {
+    try {
+        const ideaSeed = parseIdeaSeedRequest(req.body);
+        const allKeywords = await fetchKeywordsFromDB2();
+        const activeKeywords = allKeywords.filter((kw) => kw.active);
+
+        if (activeKeywords.length === 0) {
+            res.status(400).json({ error: "No active keywords in DB2. Add or activate keywords first." });
+            return;
+        }
+
+        const expansion = generateGuidedExpansion(activeKeywords, ideaSeed);
+        const directions = generateFramingDirections({
+            ideaSeed,
+            expansion,
+            selectedLenses: req.body.selected_lenses,
+            selectedContexts: req.body.selected_contexts,
+            selectedTensions: req.body.selected_tensions,
+            steeringNote: typeof req.body.steering_note === "string"
+                ? req.body.steering_note
+                : undefined,
+        });
+
+        res.json({ directions });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        res.status(400).json({ error: message });
+    }
+});
 
 /**
  * POST /api/framing/run

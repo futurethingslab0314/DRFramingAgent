@@ -53,11 +53,21 @@
 <App>
   <NavBar />
   <FramingPage>
-    <ContextInput>                    ← four-field research context form
-      <OwnerField />                  ← optional owner string
-      <RunButton />                   ← POST /api/framing/run
-    </ContextInput>
-    <FramingResult>                   ← only visible after pipeline returns
+    <GuidedFramingPanel>              ← staged flow instead of four-field form
+      <IdeaSeedInput />               ← one-sentence prompt
+      <ExpandButton />                ← POST /api/framing/expand
+      <GuidanceSelection />           ← choose lenses / contexts / tensions
+      <SteeringNote />                ← optional user note
+      <DirectionButton />             ← POST /api/framing/directions
+      <DirectionCards />              ← choose one framing direction
+      <CanvasPreview />               ← editable topic / context / gap / question / method
+      <GenerateButton />              ← POST /api/framing/run
+    </GuidedFramingPanel>
+    <FramingPreview>                  ← visible after idea entry, before and after generation
+      <GuidancePreview />
+      <CanvasSummary />
+    </FramingPreview>
+    <FramingResult>                   ← visible after pipeline returns
       <ProfileSummary>                ← bar charts for epistemic_profile + artifact_profile
         <EpistemicChart />
         <ArtifactChart />
@@ -92,13 +102,14 @@
 | `selectedKeywordId` | `string \| null` | set by clicking a node |
 | `syncStatus` | `'idle' \| 'loading' \| 'error'` | tracks Notion sync |
 | `framingResult` | `PipelineResult \| null` | returned by `POST /api/framing/run` |
+| `framingPreview` | `FramingWorkspacePreview \| null` | built progressively from idea seed, guidance, direction, and canvas |
 
 ### Local (component-scoped)
 
 | Component | Local State |
 |---|---|
 | `InspectorPanel` | `draftEdits: Partial<Keyword>` — buffered edits before PATCH |
-| `ContextInput` | `context: ResearchContextInput`, `owner: string` |
+| `GuidedFramingPanel` | `ideaSeed`, `guidanceSelections`, `steeringNote`, `directionChoice`, `canvasDraft`, `owner` |
 | `FilterBar` | `activeFilters: { orientation?, artifact_role?, activeOnly? }` |
 | `FramingFields` | `editedFields: Partial<FramingResult>` — local overrides before save |
 
@@ -167,6 +178,9 @@ sequenceDiagram
 | Change artifact_role | `handleSave()` | `PATCH /api/keywords/{id}` `{artifact_role}` | Node shape changes |
 | Change weight | `handleSave()` | `PATCH /api/keywords/{id}` `{weight}` | Node distance from center changes |
 | Click Sync | `handleSync()` | `GET /api/keywords` | Full keyword refresh + re-layout |
+| Expand idea | `handleExpand()` | `POST /api/framing/expand` | Show guidance cards for lenses / contexts / tensions |
+| Generate directions | `handleGenerateDirections()` | `POST /api/framing/directions` | Show 2-3 framing direction cards |
+| Select direction | `handleDirectionSelect()` | — | Populate canvas preview with topic / context / gap / question / method |
 | Run framing | `handleRun()` | `POST /api/framing/run` | Show FramingResult panel with 8 fields + profiles |
 | Save framing | `handleSaveFraming()` | `POST /api/framing/save` | Toast "Saved to Notion" + Notion page ID |
 

@@ -3,10 +3,54 @@
 // ═══════════════════════════════════════════════════════════════
 
 import type {
+    FramingDirectionRequest,
+    FramingDirectionResponse,
+    GuidedExpansionRequest,
+    GuidedExpansionResponse,
     FramingRunRequest,
     FramingRunResponse,
     FramingSaveResponse,
 } from "../types/framing";
+
+export async function expandFramingIdea(
+    request: GuidedExpansionRequest,
+): Promise<GuidedExpansionResponse> {
+    const res = await fetch("/api/framing/expand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+            (body as { error?: string }).error ?? `expandFramingIdea failed: ${res.status}`,
+        );
+    }
+    return res.json();
+}
+
+export async function generateFramingDirections(
+    request: FramingDirectionRequest,
+): Promise<FramingDirectionResponse> {
+    const res = await fetch("/api/framing/directions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            idea_seed: request.idea_seed,
+            selected_lenses: request.selected_lenses,
+            selected_contexts: request.selected_contexts,
+            selected_tensions: request.selected_tensions,
+            steering_note: request.steering_note,
+        }),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+            (body as { error?: string }).error ?? `generateFramingDirections failed: ${res.status}`,
+        );
+    }
+    return res.json();
+}
 
 export async function runFraming(
     request: FramingRunRequest,
