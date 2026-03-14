@@ -3,6 +3,11 @@
 // ═══════════════════════════════════════════════════════════════
 
 import type { EpistemicProfile, ArtifactProfile } from "./keyword";
+import type {
+    GuidedExpansion,
+    GuidedOption,
+    FramingDirectionOption,
+} from "../schema/framingConstellationBot";
 
 export interface BilingualText {
     en: string;
@@ -30,6 +35,47 @@ export interface ResearchContextInput {
 export interface FramingRunRequest {
     context: ResearchContextInput;
     owner?: string;
+}
+
+export interface GuidedExpansionRequest {
+    idea_seed: string;
+    owner?: string;
+}
+
+export interface GuidedExpansionResponse extends GuidedExpansion {
+    idea_seed: string;
+}
+
+export interface FramingDirectionRequest {
+    idea_seed: string;
+    selected_lenses?: GuidedOption[];
+    selected_contexts?: GuidedOption[];
+    selected_tensions?: GuidedOption[];
+    steering_note?: string;
+}
+
+export interface FramingDirectionResponse {
+    directions: FramingDirectionOption[];
+}
+
+export interface FramingCanvasDraft {
+    topic: string;
+    context: string;
+    gap: string;
+    question: string;
+    method: string;
+}
+
+export interface FramingWorkspacePreview {
+    ideaSeed: string;
+    expansion: GuidedExpansionResponse | null;
+    selectedLensIds: string[];
+    selectedContextIds: string[];
+    selectedTensionIds: string[];
+    steeringNote: string;
+    directions: FramingDirectionOption[];
+    selectedDirectionId?: string;
+    canvas?: FramingCanvasDraft;
 }
 
 export interface FramingRunResponse {

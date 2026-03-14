@@ -115,6 +115,29 @@ export interface InterpretationSummary {
     steering_keywords: string[];
 }
 
+export interface GuidedOption {
+    id: string;
+    label: string;
+    rationale: string;
+}
+
+export interface GuidedExpansion {
+    lenses: GuidedOption[];
+    contexts: GuidedOption[];
+    tensions: GuidedOption[];
+}
+
+export interface FramingDirectionOption {
+    id: string;
+    title: string;
+    summary: string;
+    topic: string;
+    context: string;
+    gap: string;
+    question: string;
+    methodHint?: string;
+}
+
 export interface FramingOutput {
     title: BilingualText;
     /** 1-2 sentences */

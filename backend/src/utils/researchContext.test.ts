@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
     composeResearchContext,
+    parseIdeaSeedRequest,
     parseStructuredResearchContext,
 } from "./researchContext.js";
 
@@ -69,5 +70,20 @@ test("composeResearchContext produces labeled sections and omits empty optional 
             "Research goal:",
             "understand reflective uncertainty",
         ].join("\n"),
+    );
+});
+
+test("parseIdeaSeedRequest trims and validates idea_seed payloads", () => {
+    const parsed = parseIdeaSeedRequest({
+        idea_seed: "  AI in design education  ",
+    });
+
+    assert.equal(parsed, "AI in design education");
+});
+
+test("parseIdeaSeedRequest rejects empty idea_seed payloads", () => {
+    assert.throws(
+        () => parseIdeaSeedRequest({ idea_seed: "   " }),
+        /idea_seed is required/,
     );
 });

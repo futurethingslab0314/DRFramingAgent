@@ -18,6 +18,10 @@ type StructuredResearchContextPayload = {
     };
 };
 
+type IdeaSeedPayload = {
+    idea_seed?: unknown;
+};
+
 function trimRequiredString(value: unknown, fieldName: string): string {
     if (typeof value !== "string" || value.trim().length === 0) {
         throw new Error(`${fieldName} is required`);
@@ -66,6 +70,10 @@ export function parseStructuredResearchContext(
         target_context: "Legacy context",
         research_goal: "Generate framing from the provided research context.",
     };
+}
+
+export function parseIdeaSeedRequest(payload: IdeaSeedPayload): string {
+    return trimRequiredString(payload.idea_seed, "idea_seed");
 }
 
 export function composeResearchContext(
