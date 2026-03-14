@@ -273,215 +273,221 @@ export default function ChatPanel({ onResult, onPreviewChange }: ChatPanelProps)
     );
 
     return (
-        <div className={`${theme.components.glassCard} space-y-5`}>
-            <h3 className={theme.typography.subheading}>{t("chat.title")}</h3>
+        <div className={`${theme.components.glassCard} flex min-h-full flex-col overflow-hidden`}>
+            <div className="flex-1 space-y-5 overflow-y-auto pr-1 pb-6">
+                <h3 className={theme.typography.subheading}>{t("chat.title")}</h3>
 
-            <div>
-                <label
-                    className={`${theme.typography.label} block mb-1`}
-                    style={{ color: theme.colors.accent }}
-                >
-                    {t("chat.seed.label")}
-                </label>
-                <textarea
-                    className={`${theme.components.input} w-full resize-none`}
-                    rows={4}
-                    value={ideaSeed}
-                    placeholder={t("chat.seed.placeholder")}
-                    onChange={(event) => setIdeaSeed(event.target.value)}
-                    disabled={expanding || loadingDirections || running}
-                />
-                <p
-                    className={`${theme.typography.mono} mt-1`}
-                    style={{ color: theme.colors.text.dim }}
-                >
-                    {t("chat.seed.helper")}
-                </p>
-            </div>
-
-            <button
-                className={`${theme.components.buttonPrimary} w-full`}
-                onClick={handleExpand}
-                disabled={expanding || loadingDirections || running || !ideaSeed.trim()}
-            >
-                {expanding ? t("chat.expand.loading") : t("chat.expand")}
-            </button>
-
-            {expansion && (
-                <div className="space-y-4">
-                    <div>
-                        <div className={theme.typography.subheading}>
-                            {t("chat.guidance.title")}
-                        </div>
-                        <p
-                            className={`${theme.typography.body} mt-2`}
-                            style={{ color: theme.colors.text.dim }}
-                        >
-                            {t("chat.guidance.helper")}
-                        </p>
-                    </div>
-
-                    <GuidanceSection
-                        label={t("chat.guidance.lenses")}
-                        options={expansion.lenses}
-                        selectedIds={selectedLensIds}
-                        onToggle={(id) => setSelectedLensIds((prev) => toggleId(prev, id))}
-                    />
-
-                    <GuidanceSection
-                        label={t("chat.guidance.contexts")}
-                        options={expansion.contexts}
-                        selectedIds={selectedContextIds}
-                        onToggle={(id) => setSelectedContextIds((prev) => toggleId(prev, id))}
-                    />
-
-                    <GuidanceSection
-                        label={t("chat.guidance.tensions")}
-                        options={expansion.tensions}
-                        selectedIds={selectedTensionIds}
-                        onToggle={(id) => setSelectedTensionIds((prev) => toggleId(prev, id))}
-                    />
-
-                    <div>
-                        <label
-                            className={`${theme.typography.label} block mb-1`}
-                            style={{ color: theme.colors.accent }}
-                        >
-                            {t("chat.note.label")}
-                        </label>
-                        <textarea
-                            className={`${theme.components.input} w-full resize-none`}
-                            rows={3}
-                            value={steeringNote}
-                            placeholder={t("chat.note.placeholder")}
-                            onChange={(event) => setSteeringNote(event.target.value)}
-                            disabled={loadingDirections || running}
-                        />
-                    </div>
-
-                    <button
-                        className={`${theme.components.buttonGhost} w-full`}
-                        onClick={handleGenerateDirections}
-                        disabled={loadingDirections || running}
+                <div>
+                    <label
+                        className={`${theme.typography.label} block mb-1`}
+                        style={{ color: theme.colors.accent }}
                     >
-                        {loadingDirections
-                            ? t("chat.directions.loading")
-                            : t("chat.directions")}
-                    </button>
+                        {t("chat.seed.label")}
+                    </label>
+                    <textarea
+                        className={`${theme.components.input} w-full resize-none`}
+                        rows={4}
+                        value={ideaSeed}
+                        placeholder={t("chat.seed.placeholder")}
+                        onChange={(event) => setIdeaSeed(event.target.value)}
+                        disabled={expanding || loadingDirections || running}
+                    />
+                    <p
+                        className={`${theme.typography.mono} mt-1`}
+                        style={{ color: theme.colors.text.dim }}
+                    >
+                        {t("chat.seed.helper")}
+                    </p>
                 </div>
-            )}
 
-            {directions.length > 0 && (
-                <div className="space-y-4">
-                    <div className={theme.typography.subheading}>
-                        {t("chat.direction.title")}
-                    </div>
-                    <div className="space-y-3">
-                        {directions.map((direction) => {
-                            const selected = direction.id === selectedDirectionId;
-                            return (
-                                <button
-                                    key={direction.id}
-                                    type="button"
-                                    onClick={() => handleSelectDirection(direction.id)}
-                                    className="w-full rounded-xl border px-4 py-4 text-left transition-all"
-                                    style={{
-                                        borderColor: selected
-                                            ? "rgba(59, 130, 246, 0.75)"
-                                            : "rgba(51, 65, 85, 0.6)",
-                                        background: selected
-                                            ? "rgba(37, 99, 235, 0.16)"
-                                            : "rgba(15, 23, 42, 0.5)",
-                                    }}
-                                >
-                                    <div className="text-sm font-semibold text-slate-100">
-                                        {direction.title}
-                                    </div>
-                                    <div
-                                        className={`${theme.typography.body} mt-2`}
-                                        style={{ color: theme.colors.text.dim }}
-                                    >
-                                        {direction.summary}
-                                    </div>
-                                    <div
-                                        className={`${theme.typography.mono} mt-3`}
-                                        style={{ color: theme.colors.text.dim }}
-                                    >
-                                        {t("chat.direction.use")}
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+                <button
+                    className={`${theme.components.buttonPrimary} w-full`}
+                    onClick={handleExpand}
+                    disabled={expanding || loadingDirections || running || !ideaSeed.trim()}
+                >
+                    {expanding ? t("chat.expand.loading") : t("chat.expand")}
+                </button>
 
-            {directions.length > 0 && (
-                <div className="space-y-3">
-                    <div className={theme.typography.subheading}>
-                        {t("chat.canvas.title")}
-                    </div>
-                    {(
-                        [
-                            ["topic", t("chat.canvas.topic")],
-                            ["context", t("chat.canvas.context")],
-                            ["gap", t("chat.canvas.gap")],
-                            ["question", t("chat.canvas.question")],
-                            ["method", t("chat.canvas.method")],
-                        ] as Array<[keyof FramingCanvasDraft, string]>
-                    ).map(([field, label]) => (
-                        <div key={field}>
+                {expansion && (
+                    <div className="space-y-4">
+                        <div>
+                            <div className={theme.typography.subheading}>
+                                {t("chat.guidance.title")}
+                            </div>
+                            <p
+                                className={`${theme.typography.body} mt-2`}
+                                style={{ color: theme.colors.text.dim }}
+                            >
+                                {t("chat.guidance.helper")}
+                            </p>
+                        </div>
+
+                        <GuidanceSection
+                            label={t("chat.guidance.lenses")}
+                            options={expansion.lenses}
+                            selectedIds={selectedLensIds}
+                            onToggle={(id) => setSelectedLensIds((prev) => toggleId(prev, id))}
+                        />
+
+                        <GuidanceSection
+                            label={t("chat.guidance.contexts")}
+                            options={expansion.contexts}
+                            selectedIds={selectedContextIds}
+                            onToggle={(id) => setSelectedContextIds((prev) => toggleId(prev, id))}
+                        />
+
+                        <GuidanceSection
+                            label={t("chat.guidance.tensions")}
+                            options={expansion.tensions}
+                            selectedIds={selectedTensionIds}
+                            onToggle={(id) => setSelectedTensionIds((prev) => toggleId(prev, id))}
+                        />
+
+                        <div>
                             <label
                                 className={`${theme.typography.label} block mb-1`}
                                 style={{ color: theme.colors.accent }}
                             >
-                                {label}
+                                {t("chat.note.label")}
                             </label>
                             <textarea
                                 className={`${theme.components.input} w-full resize-none`}
-                                rows={field === "question" ? 3 : 2}
-                                value={canvas[field]}
-                                onChange={(event) =>
-                                    handleCanvasChange(field, event.target.value)
-                                }
-                                disabled={running}
+                                rows={3}
+                                value={steeringNote}
+                                placeholder={t("chat.note.placeholder")}
+                                onChange={(event) => setSteeringNote(event.target.value)}
+                                disabled={loadingDirections || running}
                             />
                         </div>
-                    ))}
-                    <p
-                        className={theme.typography.mono}
-                        style={{ color: theme.colors.text.dim }}
+
+                        <button
+                            className={`${theme.components.buttonGhost} w-full`}
+                            onClick={handleGenerateDirections}
+                            disabled={loadingDirections || running}
+                        >
+                            {loadingDirections
+                                ? t("chat.directions.loading")
+                                : t("chat.directions")}
+                        </button>
+                    </div>
+                )}
+
+                {directions.length > 0 && (
+                    <div className="space-y-4">
+                        <div className={theme.typography.subheading}>
+                            {t("chat.direction.title")}
+                        </div>
+                        <div className="space-y-3">
+                            {directions.map((direction) => {
+                                const selected = direction.id === selectedDirectionId;
+                                return (
+                                    <button
+                                        key={direction.id}
+                                        type="button"
+                                        onClick={() => handleSelectDirection(direction.id)}
+                                        className="w-full rounded-xl border px-4 py-4 text-left transition-all"
+                                        style={{
+                                            borderColor: selected
+                                                ? "rgba(59, 130, 246, 0.75)"
+                                                : "rgba(51, 65, 85, 0.6)",
+                                            background: selected
+                                                ? "rgba(37, 99, 235, 0.16)"
+                                                : "rgba(15, 23, 42, 0.5)",
+                                        }}
+                                    >
+                                        <div className="text-sm font-semibold text-slate-100">
+                                            {direction.title}
+                                        </div>
+                                        <div
+                                            className={`${theme.typography.body} mt-2`}
+                                            style={{ color: theme.colors.text.dim }}
+                                        >
+                                            {direction.summary}
+                                        </div>
+                                        <div
+                                            className={`${theme.typography.mono} mt-3`}
+                                            style={{ color: theme.colors.text.dim }}
+                                        >
+                                            {t("chat.direction.use")}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {directions.length > 0 && (
+                    <div className="space-y-3">
+                        <div className={theme.typography.subheading}>
+                            {t("chat.canvas.title")}
+                        </div>
+                        {(
+                            [
+                                ["topic", t("chat.canvas.topic")],
+                                ["context", t("chat.canvas.context")],
+                                ["gap", t("chat.canvas.gap")],
+                                ["question", t("chat.canvas.question")],
+                                ["method", t("chat.canvas.method")],
+                            ] as Array<[keyof FramingCanvasDraft, string]>
+                        ).map(([field, label]) => (
+                            <div key={field}>
+                                <label
+                                    className={`${theme.typography.label} block mb-1`}
+                                    style={{ color: theme.colors.accent }}
+                                >
+                                    {label}
+                                </label>
+                                <textarea
+                                    className={`${theme.components.input} w-full resize-none`}
+                                    rows={field === "question" ? 3 : 2}
+                                    value={canvas[field]}
+                                    onChange={(event) =>
+                                        handleCanvasChange(field, event.target.value)
+                                    }
+                                    disabled={running}
+                                />
+                            </div>
+                        ))}
+                        <p
+                            className={theme.typography.mono}
+                            style={{ color: theme.colors.text.dim }}
+                        >
+                            {t("chat.canvas.helper")}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-4 border-t border-slate-800/70 pt-4">
+                <div className="space-y-3">
+                    <input
+                        className={`${theme.components.input} w-full`}
+                        type="text"
+                        placeholder={t("chat.owner.placeholder")}
+                        value={owner}
+                        onChange={(event) => setOwner(event.target.value)}
+                        disabled={expanding || loadingDirections || running}
+                    />
+
+                    {error && (
+                        <div
+                            className={theme.typography.mono}
+                            style={{ color: theme.colors.danger }}
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        className={`${theme.components.buttonPrimary} w-full`}
+                        onClick={handleRun}
+                        disabled={running || !canRun}
                     >
-                        {t("chat.canvas.helper")}
-                    </p>
+                        {running ? t("chat.running") : t("chat.run")}
+                    </button>
                 </div>
-            )}
-
-            <input
-                className={`${theme.components.input} w-full`}
-                type="text"
-                placeholder={t("chat.owner.placeholder")}
-                value={owner}
-                onChange={(event) => setOwner(event.target.value)}
-                disabled={expanding || loadingDirections || running}
-            />
-
-            {error && (
-                <div
-                    className={theme.typography.mono}
-                    style={{ color: theme.colors.danger }}
-                >
-                    {error}
-                </div>
-            )}
-
-            <button
-                className={`${theme.components.buttonPrimary} w-full`}
-                onClick={handleRun}
-                disabled={running || !canRun}
-            >
-                {running ? t("chat.running") : t("chat.run")}
-            </button>
+            </div>
         </div>
     );
 }
