@@ -7,7 +7,12 @@ import type {
     GuidedExpansion,
     GuidedOption,
     FramingDirectionOption,
+    StructuredTensionCandidate,
+    TensionMetadata,
+    TensionPatternType,
 } from "../schema/framingConstellationBot";
+
+export type { StructuredTensionCandidate, TensionMetadata, TensionPatternType };
 
 export interface BilingualText {
     en: string;

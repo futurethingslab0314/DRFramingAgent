@@ -3,6 +3,7 @@ import type {
     GuidedOption,
     Keyword,
     Orientation,
+    TensionPatternType,
 } from "../schema/framingConstellationBot.js";
 
 const ORIENTATION_LABELS: Record<Orientation, string> = {
@@ -30,6 +31,22 @@ function dedupeById(options: GuidedOption[]): GuidedOption[] {
     return Array.from(new Map(options.map((option) => [option.id, option])).values());
 }
 
+function inferPatternType(keyword: Keyword): TensionPatternType {
+    if (keyword.artifact_role === "critique_device" || keyword.artifact_role === "generative_construct") {
+        return "dominant_assumptions_vs_alternative_imagination";
+    }
+    if (keyword.artifact_role === "solution_system") {
+        return "functional_logic_vs_interpretive_inquiry";
+    }
+    if (keyword.artifact_role === "epistemic_mediator") {
+        return "representation_vs_experience";
+    }
+    if (keyword.orientation === "exploratory") {
+        return "collective_structure_vs_personal_difference";
+    }
+    return "normative_system_vs_lived_experience";
+}
+
 export function buildGuidedExpansion(keywords: Keyword[]): GuidedExpansion {
     const activeKeywords = keywords.filter((keyword) => keyword.active);
 
@@ -54,6 +71,12 @@ export function buildGuidedExpansion(keywords: Keyword[]): GuidedExpansion {
             id: `tension-${slugify(keyword.term)}`,
             label: `${keyword.term} vs default assumptions`,
             rationale: `Use this to frame a research gap around ${keyword.term}.`,
+            metadata: {
+                patternType: inferPatternType(keyword),
+                sourceKeywords: [keyword.term],
+                sourceOrientation: keyword.orientation,
+                score: keyword.weight,
+            },
         })),
     );
 
