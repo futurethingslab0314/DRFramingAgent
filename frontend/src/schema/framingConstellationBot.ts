@@ -115,10 +115,37 @@ export interface InterpretationSummary {
     steering_keywords: string[];
 }
 
+export type TensionPatternType =
+    | "normative_system_vs_lived_experience"
+    | "functional_logic_vs_interpretive_inquiry"
+    | "dominant_assumptions_vs_alternative_imagination"
+    | "representation_vs_experience"
+    | "collective_structure_vs_personal_difference";
+
+export interface TensionMetadata {
+    patternType: TensionPatternType;
+    sourceKeywords: string[];
+    sourceOrientation?: Orientation;
+    score: number;
+}
+
+export interface StructuredTensionCandidate {
+    id: string;
+    leftPole: string;
+    rightPole: string;
+    patternType: TensionPatternType;
+    sourceKeywords: string[];
+    sourceOrientation?: Orientation;
+    score: number;
+    rationale: string;
+    draftLabel: string;
+}
+
 export interface GuidedOption {
     id: string;
     label: string;
     rationale: string;
+    metadata?: TensionMetadata;
 }
 
 export interface GuidedExpansion {
