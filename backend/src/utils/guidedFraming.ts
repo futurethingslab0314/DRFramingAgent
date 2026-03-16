@@ -4,6 +4,8 @@ import type {
     Keyword,
     Orientation,
 } from "../schema/framingConstellationBot.js";
+import { buildStructuredContextCandidates } from "./contextCandidates.js";
+import { extractContextSignals } from "./contextSignals.js";
 import { buildStructuredTensionCandidates } from "./tensionCandidates.js";
 import { extractTensionSignals } from "./tensionSignals.js";
 
@@ -46,21 +48,37 @@ export function buildGuidedExpansion(
         })),
     );
 
+    const baseIdeaSeed = options?.ideaSeed ?? activeKeywords.map((keyword) => keyword.term).join(" ");
+    const contextSignalSet = extractContextSignals({
+        ideaSeed: baseIdeaSeed,
+        keywords: activeKeywords,
+    });
+    const contextCandidates = buildStructuredContextCandidates({
+        ideaSeed: baseIdeaSeed,
+        signalSet: contextSignalSet,
+    });
+
     const contexts = dedupeById(
-        activeKeywords.slice(0, 6).map((keyword) => ({
-            id: `context-${slugify(keyword.term)}`,
-            label: keyword.term,
-            rationale: `Derived from the active constellation term "${keyword.term}".`,
+        contextCandidates.map((candidate) => ({
+            id: candidate.id,
+            label: candidate.label,
+            rationale: candidate.rationale,
+            metadata: {
+                contextType: candidate.contextType,
+                sourceKeywords: candidate.sourceKeywords,
+                sourceOrientation: candidate.sourceOrientation,
+                score: candidate.score,
+            },
         })),
     );
 
     const signalSet = extractTensionSignals({
-        ideaSeed: options?.ideaSeed ?? activeKeywords.map((keyword) => keyword.term).join(" "),
+        ideaSeed: baseIdeaSeed,
         keywords: activeKeywords,
     });
 
     const candidates = buildStructuredTensionCandidates({
-        ideaSeed: options?.ideaSeed ?? activeKeywords.map((keyword) => keyword.term).join(" "),
+        ideaSeed: baseIdeaSeed,
         signalSet,
     });
 
