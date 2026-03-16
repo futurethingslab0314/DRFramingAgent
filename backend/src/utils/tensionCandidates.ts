@@ -65,6 +65,95 @@ function includesAny(text: string, needles: string[]): boolean {
     return needles.some((needle) => text.includes(needle));
 }
 
+function topicAnchorSimilarity(
+    signalSet: TensionSignalSet,
+    patternType: TensionPatternType,
+): number {
+    const anchors = signalSet.topicAnchors;
+
+    switch (patternType) {
+        case "normative_system_vs_lived_experience":
+            return includesAny(anchors.join(" "), [
+                "time",
+                "routine",
+                "education",
+                "work",
+                "daily",
+            ])
+                ? 0.85
+                : 0.2;
+        case "functional_logic_vs_interpretive_inquiry":
+            return includesAny(anchors.join(" "), [
+                "agent",
+                "conversation",
+                "conversational",
+                "pitch",
+                "tool",
+                "system",
+                "ai",
+                "student",
+            ])
+                ? 0.95
+                : 0.25;
+        case "dominant_assumptions_vs_alternative_imagination":
+            return includesAny(anchors.join(" "), [
+                "fiction",
+                "speculative",
+                "future",
+                "alternative",
+            ])
+                ? 0.85
+                : 0.2;
+        case "representation_vs_experience":
+            return includesAny(anchors.join(" "), [
+                "map",
+                "data",
+                "visual",
+                "representation",
+                "agent",
+                "conversation",
+                "pitch",
+            ])
+                ? 0.8
+                : 0.25;
+        case "collective_structure_vs_personal_difference":
+            return includesAny(anchors.join(" "), [
+                "timezone",
+                "global",
+                "coordination",
+                "personal",
+                "time",
+            ])
+                ? 0.8
+                : 0.15;
+    }
+}
+
+function topicDriftPenalty(
+    signalSet: TensionSignalSet,
+    patternType: TensionPatternType,
+): number {
+    const similarity = topicAnchorSimilarity(signalSet, patternType);
+    return similarity >= 0.6 ? 0 : 0.25;
+}
+
+function researchValue(patternType: TensionPatternType): number {
+    switch (patternType) {
+        case "functional_logic_vs_interpretive_inquiry":
+        case "normative_system_vs_lived_experience":
+            return 0.9;
+        case "representation_vs_experience":
+            return 0.8;
+        default:
+            return 0.7;
+    }
+}
+
+function expansionPotential(signalSet: TensionSignalSet, patternType: TensionPatternType): number {
+    const hintIndex = signalSet.patternHints.indexOf(patternType);
+    return hintIndex === -1 ? 0.35 : Math.max(0.35, 0.75 - hintIndex * 0.1);
+}
+
 function scoreCandidate(input: {
     ideaSeed: string;
     signalSet: TensionSignalSet;
@@ -74,51 +163,26 @@ function scoreCandidate(input: {
     const keywordWeightTotal = input.signalSet.weightedKeywords
         .slice(0, 3)
         .reduce((sum, keyword) => sum + keyword.weight, 0);
-    const keywordMatch = Math.min(1, keywordWeightTotal / 2);
-
-    const ideaSeedRelevance = (() => {
-        switch (input.patternType) {
-            case "normative_system_vs_lived_experience":
-                return includesAny(ideaSeed, ["time", "routine", "education", "work"])
-                    ? 0.9
-                    : 0.45;
-            case "functional_logic_vs_interpretive_inquiry":
-                return includesAny(ideaSeed, ["ai", "system", "tool", "platform"])
-                    ? 0.9
-                    : 0.4;
-            case "dominant_assumptions_vs_alternative_imagination":
-                return includesAny(ideaSeed, ["fiction", "speculative", "future", "alternative"])
-                    ? 0.95
-                    : 0.45;
-            case "representation_vs_experience":
-                return includesAny(ideaSeed, ["map", "data", "visual", "representation", "interface"])
-                    ? 0.9
-                    : 0.4;
-            case "collective_structure_vs_personal_difference":
-                return includesAny(ideaSeed, ["timezone", "global", "coordination", "personal"])
-                    ? 0.9
-                    : 0.35;
-        }
-    })();
-
-    const orientationIndex = input.signalSet.patternHints.indexOf(input.patternType);
-    const orientationAlignment = orientationIndex === -1
-        ? 0.2
-        : Math.max(0.35, 1 - orientationIndex * 0.15);
-
+    const constellationAlignment = Math.min(1, keywordWeightTotal / 2);
+    const anchorSimilarity = topicAnchorSimilarity(
+        input.signalSet,
+        input.patternType,
+    );
+    const value = researchValue(input.patternType);
     const antiSolutionismBonus = input.patternType === "functional_logic_vs_interpretive_inquiry"
         || input.patternType === "normative_system_vs_lived_experience"
         ? 0.9
         : 0.55;
-
-    const contextFit = input.signalSet.termCueMatches.length > 0 ? 0.8 : 0.4;
+    const expansion = expansionPotential(input.signalSet, input.patternType);
+    const driftPenalty = topicDriftPenalty(input.signalSet, input.patternType);
 
     const score =
-        keywordMatch * 0.3 +
-        ideaSeedRelevance * 0.25 +
-        orientationAlignment * 0.2 +
+        anchorSimilarity * 0.3 +
+        constellationAlignment * 0.25 +
+        value * 0.2 +
         antiSolutionismBonus * 0.15 +
-        contextFit * 0.1;
+        expansion * 0.1 -
+        driftPenalty;
 
     return Number(score.toFixed(3));
 }

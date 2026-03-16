@@ -20,6 +20,7 @@ export interface TensionSignalSet {
     weightedKeywords: WeightedKeywordSignal[];
     patternHints: TensionPatternType[];
     termCueMatches: string[];
+    topicAnchors: string[];
 }
 
 const TERM_CUES: Record<string, TensionPatternType[]> = {
@@ -49,6 +50,14 @@ const TERM_CUES: Record<string, TensionPatternType[]> = {
 
 function unique<T>(values: T[]): T[] {
     return Array.from(new Set(values));
+}
+
+function tokenize(text: string): string[] {
+    return text
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3);
 }
 
 function inferDominantOrientation(keywords: WeightedKeywordSignal[]): Orientation | undefined {
@@ -145,6 +154,13 @@ export function extractTensionSignals(input: {
         normalizedText.includes(cue),
     );
 
+    const topicAnchors = unique([
+        ...tokenize(input.ideaSeed),
+        ...weightedKeywords
+            .slice(0, 3)
+            .flatMap((keyword) => tokenize(keyword.term)),
+    ]).slice(0, 12);
+
     const patternHints = unique([
         ...getPatternHintsFromOrientation(dominantOrientation),
         ...weightedKeywords.flatMap((keyword) =>
@@ -158,5 +174,6 @@ export function extractTensionSignals(input: {
         weightedKeywords,
         patternHints,
         termCueMatches,
+        topicAnchors,
     };
 }

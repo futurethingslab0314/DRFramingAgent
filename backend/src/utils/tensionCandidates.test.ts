@@ -17,6 +17,7 @@ test("buildStructuredTensionCandidates returns paired poles instead of single ke
             ],
             patternHints: ["normative_system_vs_lived_experience"],
             termCueMatches: ["time"],
+            topicAnchors: ["waking", "map", "time"],
         },
     });
 
@@ -48,8 +49,59 @@ test("candidate scoring favors research-oriented tensions over generic keyword c
                 "normative_system_vs_lived_experience",
             ],
             termCueMatches: ["ai", "education"],
+            topicAnchors: ["ai", "design", "education"],
         },
     });
 
     assert.equal(result[0].score >= result[result.length - 1].score, true);
+});
+
+test("topic-anchor-first ranking keeps design pitch agent tensions ahead of distant temporal tensions", () => {
+    const result = buildStructuredTensionCandidates({
+        ideaSeed:
+            "I want to make a conversational agent that helps design students practice design pitch",
+        signalSet: {
+            dominantOrientation: "critical",
+            weightedKeywords: [
+                {
+                    term: "design education",
+                    weight: 0.95,
+                    orientation: "critical",
+                    artifactRole: "critique_device",
+                },
+                {
+                    term: "conversational agent",
+                    weight: 0.9,
+                    orientation: "problem_solving",
+                    artifactRole: "solution_system",
+                },
+                {
+                    term: "subjective time",
+                    weight: 0.85,
+                    orientation: "exploratory",
+                    artifactRole: "epistemic_mediator",
+                },
+            ],
+            patternHints: [
+                "normative_system_vs_lived_experience",
+                "functional_logic_vs_interpretive_inquiry",
+                "representation_vs_experience",
+            ],
+            termCueMatches: ["design", "pitch", "agent", "education"],
+            topicAnchors: [
+                "design",
+                "pitch",
+                "agent",
+                "conversational",
+                "education",
+                "student",
+            ],
+        },
+    });
+
+    assert.equal(
+        result[0].draftLabel.includes("solution-driven system logic")
+            || result[0].draftLabel.includes("formal representation"),
+        true,
+    );
 });
