@@ -29,7 +29,7 @@ export function generateGuidedExpansion(
     keywords: Keyword[],
     ideaSeed: string,
 ): GuidedExpansion {
-    const base = buildGuidedExpansion(keywords);
+    const base = buildGuidedExpansion(keywords, { ideaSeed });
     const normalizedIdea = sentenceCase(ideaSeed);
 
     const contexts = base.contexts.length > 0

@@ -36,3 +36,21 @@ test("buildGuidedExpansion returns structured tension metadata", () => {
         true,
     );
 });
+
+test("buildGuidedExpansion emits paired tension labels instead of default-assumption placeholders", () => {
+    const result = buildGuidedExpansion([
+        {
+            term: "design fiction",
+            active: true,
+            orientation: "critical",
+            artifact_role: "critique_device",
+            weight: 1,
+        },
+    ]);
+
+    assert.equal(
+        result.tensions.some((item) => item.label.includes("default assumptions")),
+        false,
+    );
+    assert.equal(result.tensions[0].label.includes(" vs "), true);
+});

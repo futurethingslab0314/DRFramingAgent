@@ -3,8 +3,9 @@ import type {
     GuidedOption,
     Keyword,
     Orientation,
-    TensionPatternType,
 } from "../schema/framingConstellationBot.js";
+import { buildStructuredTensionCandidates } from "./tensionCandidates.js";
+import { extractTensionSignals } from "./tensionSignals.js";
 
 const ORIENTATION_LABELS: Record<Orientation, string> = {
     exploratory: "Exploratory lens",
@@ -31,23 +32,10 @@ function dedupeById(options: GuidedOption[]): GuidedOption[] {
     return Array.from(new Map(options.map((option) => [option.id, option])).values());
 }
 
-function inferPatternType(keyword: Keyword): TensionPatternType {
-    if (keyword.artifact_role === "critique_device" || keyword.artifact_role === "generative_construct") {
-        return "dominant_assumptions_vs_alternative_imagination";
-    }
-    if (keyword.artifact_role === "solution_system") {
-        return "functional_logic_vs_interpretive_inquiry";
-    }
-    if (keyword.artifact_role === "epistemic_mediator") {
-        return "representation_vs_experience";
-    }
-    if (keyword.orientation === "exploratory") {
-        return "collective_structure_vs_personal_difference";
-    }
-    return "normative_system_vs_lived_experience";
-}
-
-export function buildGuidedExpansion(keywords: Keyword[]): GuidedExpansion {
+export function buildGuidedExpansion(
+    keywords: Keyword[],
+    options?: { ideaSeed?: string },
+): GuidedExpansion {
     const activeKeywords = keywords.filter((keyword) => keyword.active);
 
     const lenses = dedupeById(
@@ -66,16 +54,26 @@ export function buildGuidedExpansion(keywords: Keyword[]): GuidedExpansion {
         })),
     );
 
+    const signalSet = extractTensionSignals({
+        ideaSeed: options?.ideaSeed ?? activeKeywords.map((keyword) => keyword.term).join(" "),
+        keywords: activeKeywords,
+    });
+
+    const candidates = buildStructuredTensionCandidates({
+        ideaSeed: options?.ideaSeed ?? activeKeywords.map((keyword) => keyword.term).join(" "),
+        signalSet,
+    });
+
     const tensions = dedupeById(
-        activeKeywords.slice(0, 6).map((keyword) => ({
-            id: `tension-${slugify(keyword.term)}`,
-            label: `${keyword.term} vs default assumptions`,
-            rationale: `Use this to frame a research gap around ${keyword.term}.`,
+        candidates.map((candidate) => ({
+            id: candidate.id,
+            label: candidate.draftLabel,
+            rationale: candidate.rationale,
             metadata: {
-                patternType: inferPatternType(keyword),
-                sourceKeywords: [keyword.term],
-                sourceOrientation: keyword.orientation,
-                score: keyword.weight,
+                patternType: candidate.patternType,
+                sourceKeywords: candidate.sourceKeywords,
+                sourceOrientation: candidate.sourceOrientation,
+                score: candidate.score,
             },
         })),
     );
