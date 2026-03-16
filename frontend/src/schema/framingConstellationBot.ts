@@ -115,6 +115,27 @@ export interface InterpretationSummary {
     steering_keywords: string[];
 }
 
+export type ContextType =
+    | "setting_oriented"
+    | "research_frame";
+
+export interface ContextMetadata {
+    contextType: ContextType;
+    sourceKeywords: string[];
+    sourceOrientation?: Orientation;
+    score: number;
+}
+
+export interface StructuredContextCandidate {
+    id: string;
+    label: string;
+    rationale: string;
+    contextType: ContextType;
+    sourceKeywords: string[];
+    sourceOrientation?: Orientation;
+    score: number;
+}
+
 export type TensionPatternType =
     | "normative_system_vs_lived_experience"
     | "functional_logic_vs_interpretive_inquiry"
@@ -145,7 +166,7 @@ export interface GuidedOption {
     id: string;
     label: string;
     rationale: string;
-    metadata?: TensionMetadata;
+    metadata?: TensionMetadata | ContextMetadata;
 }
 
 export interface GuidedExpansion {
