@@ -23,10 +23,21 @@ import {
     type RefineSyncPayload,
 } from "../utils/framingRefineSync.js";
 import type { FramingResult } from "../services/notionService.js";
+import type {
+    ArtifactProfile,
+    EpistemicProfile,
+    InterpretationSummary,
+} from "../schema/framingConstellationBot.js";
 
 const router = Router();
 
-function toRefineSyncPayload(source: Partial<FramingResult>): RefineSyncPayload {
+type RefineRoutePayload = FramingResult & Partial<{
+    epistemic_profile: EpistemicProfile;
+    artifact_profile: ArtifactProfile;
+    interpretation_summary: InterpretationSummary;
+}>;
+
+function toRefineSyncPayload(source: Partial<RefineRoutePayload>): RefineSyncPayload {
     return Object.fromEntries(
         REFINE_SYNC_FIELDS.map((field) => [
             field,
@@ -171,8 +182,8 @@ router.post("/save", async (req, res) => {
  */
 router.post("/refine", async (req, res) => {
     try {
-        const framing = (req.body?.framing ?? req.body) as Partial<FramingResult>;
-        const baseline = (req.body?.baseline ?? framing) as Partial<FramingResult>;
+        const framing = (req.body?.framing ?? req.body) as Partial<RefineRoutePayload>;
+        const baseline = (req.body?.baseline ?? framing) as Partial<RefineRoutePayload>;
         const authoritativeLanguage: RefineSyncLanguage =
             req.body?.authoritative_language === "zh" ? "zh" : "en";
         const secondaryLanguage: RefineSyncLanguage =
