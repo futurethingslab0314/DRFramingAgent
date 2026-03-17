@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
     extractAuthoritativeFieldChanges,
     enforceAuthoritativeFieldPreservation,
+    shouldFullyRealignFraming,
     parseRefinedFramingSyncResponse,
 } from "./framingRefineSync.js";
 
@@ -124,5 +125,26 @@ test("enforceAuthoritativeFieldPreservation keeps light polish when the refined 
     assert.equal(
         preserved.research_question.zh,
         refined.research_question.zh,
+    );
+});
+
+test("shouldFullyRealignFraming returns true when research question changes", () => {
+    assert.equal(
+        shouldFullyRealignFraming(["research_question"]),
+        true,
+    );
+});
+
+test("shouldFullyRealignFraming returns true when purpose changes", () => {
+    assert.equal(
+        shouldFullyRealignFraming(["purpose"]),
+        true,
+    );
+});
+
+test("shouldFullyRealignFraming returns false for non-core field edits only", () => {
+    assert.equal(
+        shouldFullyRealignFraming(["background", "result"]),
+        false,
     );
 });

@@ -11,6 +11,12 @@ export const REFINE_SYNC_FIELDS = [
     "abstract",
 ] as const;
 
+const FULL_REALIGNMENT_FIELDS = new Set<RefineSyncField>([
+    "research_question",
+    "purpose",
+    "method",
+]);
+
 export type RefineSyncField = (typeof REFINE_SYNC_FIELDS)[number];
 export type RefineSyncLanguage = keyof BilingualText;
 
@@ -101,6 +107,14 @@ export function parseRefinedFramingSyncResponse(raw: string): RefineSyncPayload 
         contribution: parseBilingualValue(parsed, "contribution"),
         abstract: parseBilingualValue(parsed, "abstract"),
     };
+}
+
+export function shouldFullyRealignFraming(
+    authoritativeChangedFields: RefineSyncField[],
+): boolean {
+    return authoritativeChangedFields.some((field) =>
+        FULL_REALIGNMENT_FIELDS.has(field),
+    );
 }
 
 export function enforceAuthoritativeFieldPreservation(

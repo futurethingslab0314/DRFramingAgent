@@ -19,6 +19,7 @@ import {
     extractAuthoritativeFieldChanges,
     parseRefinedFramingSyncResponse,
     REFINE_SYNC_FIELDS,
+    shouldFullyRealignFraming,
     type RefineSyncLanguage,
     type RefineSyncPayload,
 } from "../utils/framingRefineSync.js";
@@ -207,6 +208,9 @@ router.post("/refine", async (req, res) => {
             baselinePayload,
             authoritativeLanguage,
         );
+        const requireFullRealignment = shouldFullyRealignFraming(
+            authoritativeChangedFields,
+        );
 
         const system = `You are an expert bilingual academic writing consultant specializing in design research.
 Your task is to refine a bilingual framing package while preserving the user's edits in the authoritative language.
@@ -221,6 +225,7 @@ Rules:
 7. Maintain academic tone and design-research specificity.
 8. Do not introduce a new research direction or remove key claims unless the current text is internally inconsistent.
 9. Return ONLY valid JSON.
+10. If full_realign_required is true, you must rewrite title, background, purpose, method, result, contribution, and abstract so they align with the updated core framing. Do not leave non-core fields near the baseline if they no longer match the protected changes.
 
 Return exactly this shape:
 {
@@ -238,6 +243,18 @@ Return exactly this shape:
             authoritative_language: authoritativeLanguage,
             secondary_language: secondaryLanguage,
             authoritative_changed_fields: authoritativeChangedFields,
+            full_realign_required: requireFullRealignment,
+            realign_scope: requireFullRealignment
+                ? [
+                    "title",
+                    "background",
+                    "purpose",
+                    "method",
+                    "result",
+                    "contribution",
+                    "abstract",
+                ]
+                : [],
             protected_authoritative_text: Object.fromEntries(
                 authoritativeChangedFields.map((field) => [
                     field,
@@ -247,7 +264,9 @@ Return exactly this shape:
             current: currentPayload,
             baseline: baselinePayload,
             notes: authoritativeChangedFields.length > 0
-                ? "Treat the changed authoritative-language fields as non-negotiable intent. Keep their concepts intact, and update the rest of the package around them."
+                ? requireFullRealignment
+                    ? "Core framing fields changed. Treat them as the new anchor and rewrite the rest of the package to match."
+                    : "Treat the changed authoritative-language fields as non-negotiable intent. Keep their concepts intact, and update the rest of the package around them."
                 : "No authoritative-language fields changed from the baseline. Lightly polish the current framing and keep both languages aligned.",
         });
 
