@@ -103,16 +103,16 @@ export default function FramingPage() {
     }, []);
 
     return (
-        <div className={`flex flex-col h-screen ${theme.layout.mainBg}`}>
+        <div className={`flex h-full min-h-0 flex-col ${theme.layout.mainBg}`}>
             <header
-                className={`${theme.layout.headerHeight} flex items-center px-6 border-b ${theme.layout.glassBorder} ${theme.layout.panelBg} ${theme.layout.glassEffect}`}
+                className={`${theme.layout.headerHeight} shrink-0 flex items-center px-6 border-b ${theme.layout.glassBorder} ${theme.layout.panelBg} ${theme.layout.glassEffect}`}
             >
                 <h2 className={theme.typography.heading} style={{ fontSize: 18 }}>
                     {t("framing.header")}
                 </h2>
             </header>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 min-h-0 overflow-hidden">
                 <div
                     className={`${theme.layout.asideWidth} flex min-h-0 flex-col border-r ${theme.layout.glassBorder} p-4`}
                 >

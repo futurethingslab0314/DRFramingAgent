@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
     extractAuthoritativeFieldChanges,
+    enforceAuthoritativeFieldPreservation,
     parseRefinedFramingSyncResponse,
 } from "./framingRefineSync.js";
 
@@ -79,5 +80,49 @@ test("parseRefinedFramingSyncResponse rejects missing bilingual values", () => {
                 }),
             ),
         /method.zh/,
+    );
+});
+
+test("enforceAuthoritativeFieldPreservation restores the user text when the refined field drifts too far", () => {
+    const current = buildFramingFixture();
+    const refined = buildFramingFixture();
+
+    current.research_question.zh =
+        "如何透過互動裝置將編織轉化為音樂，揭示原本創作者針織模糊且個人化的過程，可被體現化與分享化？";
+    refined.research_question.zh =
+        "通過互動裝置將編織轉化為音樂如何揭示設計學習中的模式與模糊性？";
+
+    const preserved = enforceAuthoritativeFieldPreservation({
+        current,
+        refined,
+        authoritativeLanguage: "zh",
+        authoritativeChangedFields: ["research_question"],
+    });
+
+    assert.equal(
+        preserved.research_question.zh,
+        current.research_question.zh,
+    );
+});
+
+test("enforceAuthoritativeFieldPreservation keeps light polish when the refined field stays close", () => {
+    const current = buildFramingFixture();
+    const refined = buildFramingFixture();
+
+    current.research_question.zh =
+        "如何透過互動裝置將編織轉化為音樂，揭示原本創作者針織模糊且個人化的過程，可被體現化與分享化？";
+    refined.research_question.zh =
+        "如何透過互動裝置把編織轉化為音樂，揭示創作者原本模糊且個人化的針織過程如何被體現並分享？";
+
+    const preserved = enforceAuthoritativeFieldPreservation({
+        current,
+        refined,
+        authoritativeLanguage: "zh",
+        authoritativeChangedFields: ["research_question"],
+    });
+
+    assert.equal(
+        preserved.research_question.zh,
+        refined.research_question.zh,
     );
 });

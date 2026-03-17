@@ -15,6 +15,7 @@ import {
     parseStructuredResearchContext,
 } from "../utils/researchContext.js";
 import {
+    enforceAuthoritativeFieldPreservation,
     extractAuthoritativeFieldChanges,
     parseRefinedFramingSyncResponse,
     REFINE_SYNC_FIELDS,
@@ -201,12 +202,14 @@ Your task is to refine a bilingual framing package while preserving the user's e
 
 Rules:
 1. The authoritative language is the source of truth.
-2. For authoritative fields listed in authoritative_changed_fields, preserve the user's meaning, emphasis, and terminology. Only tighten the prose lightly.
-3. Synchronize the secondary language to match the authoritative language faithfully and naturally.
-4. Keep the full package logically coherent across title, research_question, background, purpose, method, result, contribution, and abstract.
-5. Maintain academic tone and design-research specificity.
-6. Do not introduce a new research direction or remove key claims unless the current text is internally inconsistent.
-7. Return ONLY valid JSON.
+2. For authoritative fields listed in authoritative_changed_fields, treat the current authoritative-language text as a protected author revision.
+3. Protected authoritative fields may receive only surface-level polish for clarity, grammar, and flow. Do not replace their concepts, scope, examples, or emphasis with baseline ideas.
+4. If a protected authoritative field conflicts with other fields, revise the other fields to align with it. Never revert the protected field back toward the baseline framing.
+5. Synchronize the secondary language to match the authoritative language faithfully and naturally.
+6. Keep the full package logically coherent across title, research_question, background, purpose, method, result, contribution, and abstract.
+7. Maintain academic tone and design-research specificity.
+8. Do not introduce a new research direction or remove key claims unless the current text is internally inconsistent.
+9. Return ONLY valid JSON.
 
 Return exactly this shape:
 {
@@ -224,10 +227,16 @@ Return exactly this shape:
             authoritative_language: authoritativeLanguage,
             secondary_language: secondaryLanguage,
             authoritative_changed_fields: authoritativeChangedFields,
+            protected_authoritative_text: Object.fromEntries(
+                authoritativeChangedFields.map((field) => [
+                    field,
+                    currentPayload[field][authoritativeLanguage],
+                ]),
+            ),
             current: currentPayload,
             baseline: baselinePayload,
             notes: authoritativeChangedFields.length > 0
-                ? "Treat the changed authoritative-language fields as the user's intended revisions. Preserve them while improving clarity and syncing the other language."
+                ? "Treat the changed authoritative-language fields as non-negotiable intent. Keep their concepts intact, and update the rest of the package around them."
                 : "No authoritative-language fields changed from the baseline. Lightly polish the current framing and keep both languages aligned.",
         });
 
@@ -235,7 +244,12 @@ Return exactly this shape:
             system,
             `Please refine and synchronize the following framing package:\n${user}`,
         );
-        const refined = parseRefinedFramingSyncResponse(raw);
+        const refined = enforceAuthoritativeFieldPreservation({
+            current: currentPayload,
+            refined: parseRefinedFramingSyncResponse(raw),
+            authoritativeLanguage,
+            authoritativeChangedFields,
+        });
 
         res.json({
             title: refined.title,

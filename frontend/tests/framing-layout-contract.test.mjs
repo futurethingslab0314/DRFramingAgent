@@ -16,6 +16,10 @@ const chatPanelSource = readFileSync(
 test("framing sidebar uses ChatPanel as the only scroll owner", () => {
     assert.match(
         pageSource,
+        /className=\{`flex h-full min-h-0 flex-col \$\{theme\.layout\.mainBg\}`\}/,
+    );
+    assert.match(
+        pageSource,
         /className=\{`\$\{theme\.layout\.asideWidth\} flex min-h-0 flex-col border-r \$\{theme\.layout\.glassBorder\} p-4`\}/,
     );
     assert.doesNotMatch(
