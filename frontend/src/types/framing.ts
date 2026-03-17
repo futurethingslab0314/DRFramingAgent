@@ -14,6 +14,7 @@ import type {
     TensionMetadata,
     TensionPatternType,
 } from "../schema/framingConstellationBot";
+import type { Language } from "../i18n/messages";
 
 export type {
     StructuredContextCandidate,
@@ -116,6 +117,12 @@ export interface FramingSaveRequest {
 export interface FramingSaveResponse {
     saved: boolean;
     notion_page_id: string;
+}
+
+export interface FramingRefineRequest {
+    framing: FramingRunResponse;
+    baseline: FramingRunResponse;
+    authoritative_language: Language;
 }
 
 /** Core editable framing fields (excluding abstracts and profiles) */

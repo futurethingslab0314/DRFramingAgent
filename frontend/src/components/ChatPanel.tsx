@@ -273,8 +273,8 @@ export default function ChatPanel({ onResult, onPreviewChange }: ChatPanelProps)
     );
 
     return (
-        <div className={`${theme.components.glassCard} flex min-h-full flex-col overflow-hidden`}>
-            <div className="flex-1 space-y-5 overflow-y-auto pr-1 pb-6">
+        <div className={`${theme.components.glassCard} flex h-full min-h-0 flex-col overflow-hidden`}>
+            <div className={`flex-1 min-h-0 space-y-5 overflow-y-auto pr-1 pb-6 ${theme.layout.scrollbar}`}>
                 <h3 className={theme.typography.subheading}>{t("chat.title")}</h3>
 
                 <div>
@@ -459,7 +459,7 @@ export default function ChatPanel({ onResult, onPreviewChange }: ChatPanelProps)
                 )}
             </div>
 
-            <div className="mt-4 border-t border-slate-800/70 pt-4">
+            <div className="mt-4 shrink-0 border-t border-slate-800/70 pt-4">
                 <div className="space-y-3">
                     <input
                         className={`${theme.components.input} w-full`}

@@ -114,7 +114,7 @@ export default function FramingPage() {
 
             <div className="flex flex-1 overflow-hidden">
                 <div
-                    className={`${theme.layout.asideWidth} border-r ${theme.layout.glassBorder} overflow-y-auto p-4 ${theme.layout.scrollbar}`}
+                    className={`${theme.layout.asideWidth} flex min-h-0 flex-col border-r ${theme.layout.glassBorder} p-4`}
                 >
                     <ChatPanel
                         onResult={handleResult}

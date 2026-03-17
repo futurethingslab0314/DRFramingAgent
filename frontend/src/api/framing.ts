@@ -10,6 +10,7 @@ import type {
     FramingRunRequest,
     FramingRunResponse,
     FramingSaveResponse,
+    FramingRefineRequest,
 } from "../types/framing";
 
 export async function expandFramingIdea(
@@ -85,12 +86,12 @@ export async function saveFraming(
 
 /** Refine user-edited framing using LLM for academic polish */
 export async function refineFraming(
-    framing: FramingRunResponse,
+    request: FramingRefineRequest,
 ): Promise<FramingRunResponse> {
     const res = await fetch("/api/framing/refine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(framing),
+        body: JSON.stringify(request),
     });
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));

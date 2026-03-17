@@ -30,16 +30,23 @@ interface FramingCardProps {
     owner?: string;
 }
 
+function cloneFramingResponse(value: FramingRunResponse): FramingRunResponse {
+    return structuredClone(value);
+}
+
 export default function FramingCard({ result, owner }: FramingCardProps) {
-    const { t } = useI18n();
-    const [edited, setEdited] = useState<FramingRunResponse>({ ...result });
+    const { language, t } = useI18n();
+    const [edited, setEdited] = useState<FramingRunResponse>(() => cloneFramingResponse(result));
+    const [baseline, setBaseline] = useState<FramingRunResponse>(() => cloneFramingResponse(result));
     const [saving, setSaving] = useState(false);
     const [refining, setRefining] = useState(false);
     const [saveResult, setSaveResult] = useState<string | null>(null);
     const [dirty, setDirty] = useState(false);
 
     useEffect(() => {
-        setEdited({ ...result });
+        const cloned = cloneFramingResponse(result);
+        setEdited(cloned);
+        setBaseline(cloneFramingResponse(result));
         setDirty(false);
         setSaveResult(null);
     }, [result]);
@@ -83,8 +90,13 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
         setRefining(true);
         setSaveResult(null);
         try {
-            const refined = await refineFraming(edited);
+            const refined = await refineFraming({
+                framing: edited,
+                baseline,
+                authoritative_language: language,
+            });
             setEdited(refined);
+            setBaseline(cloneFramingResponse(refined));
             setDirty(true);
             setSaveResult(t("card.refine.applied"));
         } catch (err) {
@@ -94,10 +106,11 @@ export default function FramingCard({ result, owner }: FramingCardProps) {
         } finally {
             setRefining(false);
         }
-    }, [edited, t]);
+    }, [baseline, edited, language, t]);
 
     const handleReset = useCallback(() => {
-        setEdited({ ...result });
+        setEdited(cloneFramingResponse(result));
+        setBaseline(cloneFramingResponse(result));
         setDirty(false);
         setSaveResult(null);
     }, [result]);
